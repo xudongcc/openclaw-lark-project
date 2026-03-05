@@ -1,7 +1,12 @@
-# Lark Project Workitem Plugin (OpenAPI Supplement)
+# openclaw-lark-project (OpenAPI Supplement)
 
 这个插件用于补充官方 `lark-project` MCP 在某些字段写入上的限制。
 当前仅启用一个工具：`update_workitem_description`。
+
+## 使用 pnpm
+```bash
+pnpm install
+```
 
 ## 配置项
 - `pluginId`

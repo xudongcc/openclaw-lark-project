@@ -1,5 +1,5 @@
 {
-  "name": "@openclaw/lark-project-workitem",
+  "name": "openclaw-lark-project",
   "version": "0.1.0",
   "description": "OpenClaw plugin for Lark Project workitem description updates",
   "main": "dist/index.js",
@@ -12,6 +12,10 @@
     "extensions": [
       "./dist/index.js"
     ]
+  },
+  "packageManager": "pnpm@10.6.0",
+  "scripts": {
+    "prepare": "echo 'No build step required (dist is committed).'"
   },
   "license": "MIT"
 }
