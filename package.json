@@ -1,6 +1,6 @@
 {
   "name": "openclaw-lark-project",
-  "version": "0.0.0-development",
+  "version": "1.0.0",
   "description": "OpenClaw plugin for Lark Project workitem description updates",
   "type": "module",
   "openclaw": {
