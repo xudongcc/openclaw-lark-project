@@ -7,7 +7,7 @@ export type TokenManagerConfig = {
   baseUrl: string;
   pluginId: string;
   pluginSecret: string;
-  userId: string;
+  userKey: string;
   fetchImpl?: typeof fetch;
 };
 
@@ -15,7 +15,7 @@ export class TokenManager {
   private readonly baseUrl: string;
   private readonly pluginId: string;
   private readonly pluginSecret: string;
-  private readonly userId: string;
+  private readonly userKey: string;
   private readonly fetchImpl: typeof fetch;
 
   private pluginToken?: TokenCacheEntry;
@@ -25,7 +25,7 @@ export class TokenManager {
     this.baseUrl = cfg.baseUrl.replace(/\/$/, "");
     this.pluginId = cfg.pluginId;
     this.pluginSecret = cfg.pluginSecret;
-    this.userId = cfg.userId;
+    this.userKey = cfg.userKey;
     this.fetchImpl = cfg.fetchImpl || fetch;
   }
 
@@ -67,7 +67,7 @@ export class TokenManager {
         "X-Plugin-Token": pluginToken,
       },
       body: JSON.stringify({
-        user_key: this.userId,
+        user_key: this.userKey,
       }),
     });
 

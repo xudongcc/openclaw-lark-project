@@ -7,8 +7,17 @@
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["pluginId", "pluginSecret", "userId"],
+    "required": [
+      "pluginId",
+      "pluginSecret",
+      "userKey"
+    ],
     "properties": {
+      "baseUrl": {
+        "type": "string",
+        "default": "https://project.feishu.cn",
+        "title": "Project Base URL"
+      },
       "pluginId": {
         "type": "string",
         "minLength": 1,
@@ -19,15 +28,10 @@
         "minLength": 1,
         "title": "Plugin Secret"
       },
-      "userId": {
+      "userKey": {
         "type": "string",
         "minLength": 1,
-        "title": "User ID"
-      },
-      "baseUrl": {
-        "type": "string",
-        "default": "https://project.feishu.cn",
-        "title": "Project Base URL"
+        "title": "User Key"
       }
     }
   },
@@ -41,9 +45,9 @@
       "placeholder": "输入插件密钥",
       "sensitive": true
     },
-    "userId": {
-      "label": "User ID",
-      "placeholder": "例如: ou_xxx"
+    "userKey": {
+      "label": "User Key",
+      "placeholder": "例如: ou_xxx 或 user_xxx"
     },
     "baseUrl": {
       "label": "Project Base URL",

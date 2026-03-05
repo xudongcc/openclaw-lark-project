@@ -1,7 +1,7 @@
 type PluginConfig = {
   pluginId: string;
   pluginSecret: string;
-  userId: string;
+  userKey: string;
   baseUrl?: string;
 };
 
@@ -12,7 +12,7 @@ export default function register(api: any) {
   api?.logger?.info?.("[lark-project-workitem] plugin loaded (tools disabled)", {
     hasPluginId: Boolean(cfg.pluginId),
     hasPluginSecret: Boolean(cfg.pluginSecret),
-    hasUserId: Boolean(cfg.userId),
+    hasUserKey: Boolean(cfg.userKey),
     baseUrl,
     toolsEnabled: false,
   });

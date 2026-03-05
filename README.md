@@ -3,7 +3,7 @@
 这个插件现在是 **OpenAPI 实现**（不调用 MCP），但工具名和参数风格借鉴了 Feishu Project MCP 文档。
 
 ## 已完成
-- 配置项：`pluginId` / `pluginSecret` / `userId`
+- 配置项：`pluginId` / `pluginSecret` / `userKey`
 - Token：`src/token.ts`（fetch + 内存缓存）
 - OpenAPI Client：`src/openapi-client.ts`
 - 工具注册：`src/index.ts`
