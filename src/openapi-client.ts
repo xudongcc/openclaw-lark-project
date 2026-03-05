@@ -5,6 +5,32 @@ export type OpenApiClientConfig = {
   userKey: string;
 };
 
+export type ToolName =
+  | "create_workitem"
+  | "finish_node"
+  | "get_node_detail"
+  | "get_view_detail"
+  | "get_workitem_brief"
+  | "get_workitem_info"
+  | "list_schedule"
+  | "list_todo"
+  | "search_by_mql"
+  | "update_field";
+
+const ENDPOINTS: Record<ToolName, string> = {
+  // TODO: 用官方文档中的精确 endpoint 替换以下占位路径
+  create_workitem: "/open_api/work_item/create",
+  finish_node: "/open_api/work_item/finish_node",
+  get_node_detail: "/open_api/work_item/node/detail",
+  get_view_detail: "/open_api/view/detail",
+  get_workitem_brief: "/open_api/work_item/detail",
+  get_workitem_info: "/open_api/work_item/info",
+  list_schedule: "/open_api/schedule/list",
+  list_todo: "/open_api/todo/list",
+  search_by_mql: "/open_api/moql/search",
+  update_field: "/open_api/work_item/update_field",
+};
+
 export class FeishuProjectOpenApiClient {
   constructor(private readonly cfg: OpenApiClientConfig) {}
 
@@ -15,10 +41,7 @@ export class FeishuProjectOpenApiClient {
       "X-Plugin-Token": token,
     };
 
-    // plugin token 模式下，补充用户身份
-    if (authMode === "plugin") {
-      headers["X-User-Key"] = this.cfg.userKey;
-    }
+    if (authMode === "plugin") headers["X-User-Key"] = this.cfg.userKey;
 
     const res = await fetch(`${this.cfg.baseUrl}${path}`, {
       method: "POST",
@@ -26,30 +49,21 @@ export class FeishuProjectOpenApiClient {
       body: JSON.stringify(body || {}),
     });
 
-    if (!res.ok) throw new Error(`OpenAPI ${path} failed: HTTP ${res.status}`);
-    return res.json();
+    const text = await res.text();
+    let json: any = null;
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      // keep raw text for debugging
+    }
+
+    if (!res.ok) {
+      throw new Error(`OpenAPI ${path} failed: HTTP ${res.status}; body=${text.slice(0, 400)}`);
+    }
+    return json ?? { raw: text };
   }
 
-  // 借鉴 MCP search_by_mql 的参数结构，但底层走 OpenAPI
-  async searchByMoql(params: {
-    project_key: string;
-    moql?: string;
-    session_id?: string;
-    group_pagination_list?: Array<{ group_id?: string; page_num?: number }>;
-  }) {
-    return this.request("/open_api/moql/search", params, "user");
-  }
-
-  async getWorkitemInfo(params: { project_key: string; work_item_type_key?: string }) {
-    return this.request("/open_api/work_item/info", params, "user");
-  }
-
-  async updateWorkitemStatus(params: {
-    project_key: string;
-    work_item_type_key: string;
-    work_item_id: string;
-    status: string;
-  }) {
-    return this.request("/open_api/work_item/update", params, "user");
+  async callTool(name: ToolName, params: any) {
+    return this.request(ENDPOINTS[name], params, "user");
   }
 }

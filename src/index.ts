@@ -1,4 +1,4 @@
-import { FeishuProjectOpenApiClient } from "./openapi-client";
+import { FeishuProjectOpenApiClient, type ToolName } from "./openapi-client";
 import { TokenManager } from "./token";
 
 type PluginConfig = {
@@ -7,6 +7,17 @@ type PluginConfig = {
   userId: string;
   baseUrl?: string;
 };
+
+function wrapResult(result: any) {
+  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+}
+
+function wrapError(tool: string, err: any) {
+  return {
+    content: [{ type: "text", text: `${tool} 失败: ${err?.message || String(err)}` }],
+    isError: true,
+  };
+}
 
 export default function register(api: any) {
   const cfg = (api?.config || {}) as PluginConfig;
@@ -33,88 +44,163 @@ export default function register(api: any) {
     baseUrl,
   });
 
-  api.registerTool(
-    {
-      name: "search_by_mql",
-      description: "使用 MOQL 查询飞书项目数据（OpenAPI 实现，参数设计借鉴 MCP）。",
-      parameters: {
-        type: "object",
-        required: ["project_key"],
-        properties: {
-          project_key: { type: "string" },
-          moql: { type: "string" },
-          session_id: { type: "string" },
-          group_pagination_list: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                group_id: { type: "string" },
-                page_num: { type: "number" },
-              },
-            },
+  const registerTool = (
+    name: ToolName,
+    description: string,
+    parameters: Record<string, any>,
+  ) => {
+    api.registerTool(
+      {
+        name,
+        description,
+        parameters,
+        async execute(_id: string, params: any) {
+          try {
+            const result = await openapi.callTool(name, params);
+            return wrapResult(result);
+          } catch (err: any) {
+            return wrapError(name, err);
+          }
+        },
+      },
+      { optional: true },
+    );
+  };
+
+  registerTool("get_workitem_info", "获取工作项类型可用字段与角色信息。", {
+    type: "object",
+    required: ["work_item_type"],
+    properties: {
+      work_item_type: { type: "string" },
+      project_key: { type: "string" },
+      url: { type: "string" },
+    },
+  });
+
+  registerTool("search_by_mql", "使用 MOQL 查询飞书项目数据。", {
+    type: "object",
+    required: ["project_key"],
+    properties: {
+      project_key: { type: "string" },
+      moql: { type: "string" },
+      session_id: { type: "string" },
+      group_pagination_list: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            group_id: { type: "string" },
+            page_num: { type: "number" },
           },
         },
       },
-      async execute(_id: string, params: any) {
-        try {
-          const result = await openapi.searchByMoql(params);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-        } catch (err: any) {
-          return { content: [{ type: "text", text: `search_by_mql 失败: ${err?.message || String(err)}` }], isError: true };
-        }
-      },
     },
-    { optional: true },
-  );
+  });
 
-  api.registerTool(
-    {
-      name: "get_workitem_info",
-      description: "获取空间/工作项类型信息，用于辅助生成可读 MOQL 字段名。",
-      parameters: {
-        type: "object",
-        required: ["project_key"],
-        properties: {
-          project_key: { type: "string" },
-          work_item_type_key: { type: "string" },
+  registerTool("update_field", "更新工作项字段值（支持一次多个字段）。", {
+    type: "object",
+    required: ["work_item_id"],
+    properties: {
+      work_item_id: { type: "string" },
+      project_key: { type: "string" },
+      url: { type: "string" },
+      fields: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            field_key: { type: "string" },
+            field_value: { type: "string" },
+          },
         },
       },
-      async execute(_id: string, params: any) {
-        try {
-          const result = await openapi.getWorkitemInfo(params);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-        } catch (err: any) {
-          return { content: [{ type: "text", text: `get_workitem_info 失败: ${err?.message || String(err)}` }], isError: true };
-        }
-      },
     },
-    { optional: true },
-  );
+  });
 
-  api.registerTool(
-    {
-      name: "update_workitem_status",
-      description: "更新工作项状态（OpenAPI 实现）。",
-      parameters: {
-        type: "object",
-        required: ["project_key", "work_item_type_key", "work_item_id", "status"],
-        properties: {
-          project_key: { type: "string" },
-          work_item_type_key: { type: "string" },
-          work_item_id: { type: "string" },
-          status: { type: "string" },
+  registerTool("create_workitem", "创建工作项实例。", {
+    type: "object",
+    required: ["work_item_type"],
+    properties: {
+      work_item_type: { type: "string" },
+      project_key: { type: "string" },
+      url: { type: "string" },
+      fields: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            field_key: { type: "string" },
+            field_value: { type: "string" },
+          },
         },
       },
-      async execute(_id: string, params: any) {
-        try {
-          const result = await openapi.updateWorkitemStatus(params);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-        } catch (err: any) {
-          return { content: [{ type: "text", text: `update_workitem_status 失败: ${err?.message || String(err)}` }], isError: true };
-        }
-      },
     },
-    { optional: true },
-  );
+  });
+
+  registerTool("finish_node", "完成节点流转。", {
+    type: "object",
+    required: ["work_item_id", "node_id"],
+    properties: {
+      work_item_id: { type: "string" },
+      node_id: { type: "string" },
+      project_key: { type: "string" },
+      url: { type: "string" },
+    },
+  });
+
+  registerTool("get_node_detail", "获取节点详情。", {
+    type: "object",
+    required: ["work_item_id", "node_id"],
+    properties: {
+      work_item_id: { type: "string" },
+      node_id: { type: "string" },
+      project_key: { type: "string" },
+      url: { type: "string" },
+    },
+  });
+
+  registerTool("get_view_detail", "获取视图详情。", {
+    type: "object",
+    required: ["view_id"],
+    properties: {
+      view_id: { type: "string" },
+      project_key: { type: "string" },
+      url: { type: "string" },
+      page_num: { type: "number" },
+      fields: { type: "array", items: { type: "string" } },
+    },
+  });
+
+  registerTool("get_workitem_brief", "获取工作项概况。", {
+    type: "object",
+    required: ["work_item_id"],
+    properties: {
+      work_item_id: { type: "string" },
+      project_key: { type: "string" },
+      url: { type: "string" },
+      fields: { type: "array", items: { type: "string" } },
+    },
+  });
+
+  registerTool("list_schedule", "查询指定用户时间段排期与工作量。", {
+    type: "object",
+    required: ["project_key", "user_keys", "start_time", "end_time"],
+    properties: {
+      project_key: { type: "string" },
+      user_keys: { type: "array", items: { type: "string" } },
+      start_time: { type: "string" },
+      end_time: { type: "string" },
+      work_item_type_keys: { type: "array", items: { type: "string" } },
+    },
+  });
+
+  registerTool("list_todo", "查询当前用户待办/已办（分页）。", {
+    type: "object",
+    required: ["action", "page_num"],
+    properties: {
+      action: { type: "string", enum: ["todo", "done", "overdue", "this_week"] },
+      page_num: { type: "number" },
+      asset_key: { type: "string" },
+    },
+  });
 }
