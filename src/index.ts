@@ -1,11 +1,9 @@
-import { FeishuProjectOpenApiClient } from "./openapi-client";
-import { TokenManager } from "./token";
+import { LarkProject } from "./sdk";
 
 type PluginConfig = {
   pluginId: string;
   pluginSecret: string;
   userKey: string;
-  baseUrl?: string;
 };
 
 function wrapResult(result: any) {
@@ -14,34 +12,26 @@ function wrapResult(result: any) {
 
 function wrapError(tool: string, err: any) {
   return {
-    content: [{ type: "text", text: `${tool} 失败: ${err?.message || String(err)}` }],
+    content: [
+      { type: "text", text: `${tool} 失败: ${err?.message || String(err)}` },
+    ],
     isError: true,
   };
 }
 
 export default function register(api: any) {
   const cfg = (api?.config || {}) as PluginConfig;
-  const baseUrl = cfg.baseUrl || "https://project.feishu.cn";
 
-  const tokenManager = new TokenManager({
-    baseUrl,
+  const client = new LarkProject({
     pluginId: cfg.pluginId,
     pluginSecret: cfg.pluginSecret,
     userKey: cfg.userKey,
   });
 
-  const openapi = new FeishuProjectOpenApiClient({
-    baseUrl,
-    userKey: cfg.userKey,
-    getPluginToken: () => tokenManager.getPluginAccessToken(),
-  });
-
-  api?.logger?.info?.("[lark-project-workitem] plugin loaded (description tool enabled)", {
+  api?.logger?.info?.("[lark-project] plugin loaded", {
     hasPluginId: Boolean(cfg.pluginId),
     hasPluginSecret: Boolean(cfg.pluginSecret),
     hasUserKey: Boolean(cfg.userKey),
-    baseUrl,
-    enabledTools: ["update_workitem_description"],
   });
 
   api.registerTool(
@@ -59,19 +49,29 @@ export default function register(api: any) {
               "工作项详情页 URL，例如 https://project.feishu.cn/<project_key>/<work_item_type>/detail/<work_item_id>",
           },
           project_key: { type: "string" },
-          work_item_type: { type: "string", description: "如 story / issue / bug" },
-          work_item_type_key: { type: "string", description: "work_item_type 的别名" },
+          work_item_type: {
+            type: "string",
+            description: "如 story / issue / bug",
+          },
+          work_item_type_key: {
+            type: "string",
+            description: "work_item_type 的别名",
+          },
           work_item_id: { type: "string" },
-          description: { type: "string", description: "要写入的描述内容（支持 markdown 文本）" },
+          description: {
+            type: "string",
+            description: "要写入的描述内容（支持 markdown 文本）",
+          },
           field_key: {
             type: "string",
-            description: "默认 description。仅在你的空间使用自定义描述字段 key 时传入。",
+            description:
+              "默认 description。仅在你的空间使用自定义描述字段 key 时传入。",
           },
         },
       },
       async execute(_id: string, params: any) {
         try {
-          const result = await openapi.callTool("update_workitem_description", params);
+          const result = await client.updateWorkitemDescription(params);
           return wrapResult(result);
         } catch (err: any) {
           return wrapError("update_workitem_description", err);

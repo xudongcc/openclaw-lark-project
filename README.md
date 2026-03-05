@@ -1,33 +1,40 @@
-# openclaw-lark-project (OpenAPI Supplement)
+# openclaw-lark-project
 
-这个插件用于补充官方 `lark-project` MCP 在某些字段写入上的限制。
-当前仅启用一个工具：`update_workitem_description`。
+[OpenClaw](https://github.com/openclaw/openclaw) 插件，用于通过飞书项目 OpenAPI 更新工作项字段。
 
-## 使用 pnpm
+## 安装
+
 ```bash
-pnpm install
+openclaw plugins install openclaw-lark-project
 ```
 
-## 配置项
-- `pluginId`
-- `pluginSecret`
-- `userKey`
-- `baseUrl`（可选，默认 `https://project.feishu.cn`）
+## 配置
 
-## 已启用工具
-- `update_workitem_description`
+| 参数           | 必填 | 说明                                  |
+| -------------- | ---- | ------------------------------------- |
+| `pluginId`     | ✅   | 飞书项目插件 ID，例如 `cli_xxx`       |
+| `pluginSecret` | ✅   | 飞书项目插件密钥                      |
+| `userKey`      | ✅   | 用户标识，例如 `ou_xxx` 或 `user_xxx` |
 
-用途：更新工作项「描述」字段（默认 `field_key=description`）。
+## 工具
 
-## 输入参数
-- `description`（必填）
-- `url`（可选，详情页 URL，可自动解析 `project_key` / `work_item_type` / `work_item_id`）
-- `project_key`（可选，若不传 `url` 则建议传）
-- `work_item_type` / `work_item_type_key`（可选，若不传 `url` 则必传其一）
-- `work_item_id`（可选，若不传 `url` 则必传）
-- `field_key`（可选，默认 `description`）
+### `update_workitem_description`
 
-## 示例
+更新工作项描述字段（用于补充 MCP `update_field` 在描述字段上的限制）。
+
+**参数：**
+
+| 参数             | 必填 | 说明                                                                           |
+| ---------------- | ---- | ------------------------------------------------------------------------------ |
+| `description`    | ✅   | 要写入的描述内容（支持 markdown）                                              |
+| `url`            |      | 工作项详情页 URL，可自动解析 `project_key` / `work_item_type` / `work_item_id` |
+| `project_key`    |      | 项目标识（不传 `url` 时需要）                                                  |
+| `work_item_type` |      | 工作项类型，如 `story` / `issue` / `bug`                                       |
+| `work_item_id`   |      | 工作项 ID（不传 `url` 时需要）                                                 |
+| `field_key`      |      | 默认 `description`，仅在使用自定义字段 key 时传入                              |
+
+**示例：**
+
 ```json
 {
   "url": "https://project.feishu.cn/6497ba7bfbdf459fb32b428d/story/detail/6856187236",
@@ -35,6 +42,13 @@ pnpm install
 }
 ```
 
-## 说明
-- 本插件走飞书项目 OpenAPI，使用 `X-PLUGIN-TOKEN + X-USER-KEY`。
-- 该工具是针对 MCP `update_field` 在描述字段报错时的兜底能力。
+## 开发
+
+```bash
+pnpm install
+pnpm test
+```
+
+## 许可证
+
+MIT

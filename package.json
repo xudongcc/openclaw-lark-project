@@ -1,21 +1,30 @@
 {
   "name": "openclaw-lark-project",
-  "version": "0.1.0",
+  "version": "0.0.0-development",
   "description": "OpenClaw plugin for Lark Project workitem description updates",
-  "main": "dist/index.js",
-  "files": [
-    "dist",
-    "openclaw.plugin.json",
-    "README.md"
-  ],
+  "type": "module",
   "openclaw": {
     "extensions": [
-      "./dist/index.js"
+      "./src/index.ts"
     ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xudongcc/openclaw-lark-project.git"
   },
   "packageManager": "pnpm@10.6.0",
   "scripts": {
-    "prepare": "echo 'No build step required (dist is committed).'"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.0",
+    "@semantic-release/git": "^10.0.0",
+    "@semantic-release/github": "^11.0.0",
+    "semantic-release": "^24.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.0"
   },
   "license": "MIT"
 }
