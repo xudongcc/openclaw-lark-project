@@ -1,4 +1,4 @@
-import { FeishuProjectMcpClient, type SearchByMqlParams } from "./mcp-client";
+import { FeishuProjectOpenApiClient } from "./openapi-client";
 import { TokenManager } from "./token";
 
 type PluginConfig = {
@@ -11,7 +11,6 @@ type PluginConfig = {
 export default function register(api: any) {
   const cfg = (api?.config || {}) as PluginConfig;
   const baseUrl = cfg.baseUrl || "https://project.feishu.cn";
-  const mcpBaseUrl = "https://project.feishu.cn/mcp_server/v1";
 
   const tokenManager = new TokenManager({
     baseUrl,
@@ -20,77 +19,99 @@ export default function register(api: any) {
     userId: cfg.userId,
   });
 
-  const mcpClient = new FeishuProjectMcpClient(mcpBaseUrl, () => tokenManager.getPluginAccessToken());
+  const openapi = new FeishuProjectOpenApiClient({
+    baseUrl,
+    userKey: cfg.userId,
+    getPluginToken: () => tokenManager.getPluginAccessToken(),
+    getUserToken: () => tokenManager.getUserAccessToken(),
+  });
 
-  api?.logger?.info?.("[lark-project-workitem] plugin loaded", {
+  api?.logger?.info?.("[lark-project-workitem] plugin loaded (OpenAPI mode)", {
     hasPluginId: Boolean(cfg.pluginId),
     hasPluginSecret: Boolean(cfg.pluginSecret),
     hasUserId: Boolean(cfg.userId),
     baseUrl,
-    mcpBaseUrl,
   });
 
   api.registerTool(
     {
       name: "search_by_mql",
-      description: "使用 MOQL 进行 Meego/飞书项目数据查询。",
+      description: "使用 MOQL 查询飞书项目数据（OpenAPI 实现，参数设计借鉴 MCP）。",
       parameters: {
         type: "object",
-        title: "search_by_mql",
         required: ["project_key"],
         properties: {
-          project_key: {
-            type: "string",
-            description: "要查询的工作项类型所属的空间 projectKey/simpleName/空间名",
-          },
-          moql: {
-            type: "string",
-            description: "要执行的 MOQL 语句。",
-          },
-          session_id: {
-            type: "string",
-            description: "会话 ID，用于分页查询。",
-          },
+          project_key: { type: "string" },
+          moql: { type: "string" },
+          session_id: { type: "string" },
           group_pagination_list: {
             type: "array",
-            description: "分页信息，目前只支持一组分页数据。",
             items: {
               type: "object",
               properties: {
-                group_id: {
-                  type: "string",
-                  description: "分组 ID（来自返回体 list.group_infos.group_id）",
-                },
-                page_num: {
-                  type: "number",
-                  description: "页码，从 1 开始，每页 50 条",
-                },
+                group_id: { type: "string" },
+                page_num: { type: "number" },
               },
             },
           },
         },
       },
-      async execute(_id: string, params: SearchByMqlParams) {
+      async execute(_id: string, params: any) {
         try {
-          const result = await mcpClient.searchByMql(params);
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify(result, null, 2),
-              },
-            ],
-          };
+          const result = await openapi.searchByMoql(params);
+          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         } catch (err: any) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `search_by_mql 执行失败: ${err?.message || String(err)}`,
-              },
-            ],
-            isError: true,
-          };
+          return { content: [{ type: "text", text: `search_by_mql 失败: ${err?.message || String(err)}` }], isError: true };
+        }
+      },
+    },
+    { optional: true },
+  );
+
+  api.registerTool(
+    {
+      name: "get_workitem_info",
+      description: "获取空间/工作项类型信息，用于辅助生成可读 MOQL 字段名。",
+      parameters: {
+        type: "object",
+        required: ["project_key"],
+        properties: {
+          project_key: { type: "string" },
+          work_item_type_key: { type: "string" },
+        },
+      },
+      async execute(_id: string, params: any) {
+        try {
+          const result = await openapi.getWorkitemInfo(params);
+          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+        } catch (err: any) {
+          return { content: [{ type: "text", text: `get_workitem_info 失败: ${err?.message || String(err)}` }], isError: true };
+        }
+      },
+    },
+    { optional: true },
+  );
+
+  api.registerTool(
+    {
+      name: "update_workitem_status",
+      description: "更新工作项状态（OpenAPI 实现）。",
+      parameters: {
+        type: "object",
+        required: ["project_key", "work_item_type_key", "work_item_id", "status"],
+        properties: {
+          project_key: { type: "string" },
+          work_item_type_key: { type: "string" },
+          work_item_id: { type: "string" },
+          status: { type: "string" },
+        },
+      },
+      async execute(_id: string, params: any) {
+        try {
+          const result = await openapi.updateWorkitemStatus(params);
+          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+        } catch (err: any) {
+          return { content: [{ type: "text", text: `update_workitem_status 失败: ${err?.message || String(err)}` }], isError: true };
         }
       },
     },

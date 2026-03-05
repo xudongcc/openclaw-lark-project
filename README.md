@@ -1,37 +1,30 @@
 # Lark Project Workitem Plugin (Scaffold)
 
-当前是第一版架构骨架，已包含：
-- `openclaw.plugin.json`（含 `configSchema` + `uiHints`）
+当前是 OpenAPI 版本骨架（不调用 MCP）。
+
+已包含：
+- `openclaw.plugin.json`（`configSchema` + `uiHints`）
 - 必填配置：`pluginId` / `pluginSecret` / `userId`
-- `pluginSecret` 已标记为敏感字段（`sensitive: true`）
-- `src/index.ts` 插件入口（待补充 API 调用与工具注册）
+- `pluginSecret` 标记为敏感字段（`sensitive: true`）
+- `src/token.ts`：fetch 获取 token（内存缓存）
+- `src/openapi-client.ts`：OpenAPI 调用封装
+- `src/index.ts`：注册工具
 
-## Token 获取与缓存建议
-- 已在 `src/token.ts` 加入 `TokenManager`，使用 **fetch** 获取：
-  - `plugin_access_token`
-  - `user_access_token`
-- 当前实现为**仅内存缓存**（带过期时间，提前 30 秒刷新）。
+## 已注册工具
+- `get_workitem_info`
+- `search_by_mql`
+- `update_workitem_status`
 
-### 为什么先用内存缓存
-- 安全：重启进程后 token 自动失效，不落盘泄露风险更低。
-- 简单：MVP 阶段足够稳定。
+> 工具设计借鉴 MCP 的参数风格；底层调用为 OpenAPI。
 
-### 生产环境推荐
-- `pluginSecret` 放在插件 config（已 `sensitive: true`）。
-- access_token **不建议长期落盘**。
-- 若必须落盘（跨重启减少登录开销），建议：
-  1. 写到独立状态文件（如 `~/.openclaw/state/lark-project/tokens.json`）
-  2. 文件权限限制为 `600`
-  3. 仅保存短期 token + 过期时间，不保存更多敏感上下文
+## Token 存储建议
+- MVP：仅内存缓存（推荐）
+- 生产：可选落盘（最小化字段 + 文件权限 600）
 
-## 已按 MCP 工具参数落地
-- 新增工具：`search_by_mql`
-- 参数对齐：`project_key`（必填）、`moql`、`session_id`、`group_pagination_list`
-- 调用方式：通过 `fetch` 调固定地址 `https://project.feishu.cn/mcp_server/v1`
-- 工具名对齐 MCP：`mcp__feishu-project__search_by_mql`
+## 待联调项
+当前 OpenAPI path 使用占位路径：
+- `/open_api/work_item/info`
+- `/open_api/moql/search`
+- `/open_api/work_item/update`
 
-## 下一步建议
-1. 新增 `get_workitem_info`（先查空间+工作项类型字段）
-2. 再加 `workitem_list`（自动拼 MOQL）
-3. 加 `workitem_update_status`（按工作项 ID 更新状态）
-4. 补一批常用 MOQL 模板（按负责人、状态、时间）
+你给我官方准确 endpoint 后，我会在 1 次提交内替换并完成联调。
