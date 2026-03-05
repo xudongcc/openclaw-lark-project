@@ -19,10 +19,11 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "@semantic-release/changelog": "^6.0.0",
-    "@semantic-release/git": "^10.0.0",
-    "@semantic-release/github": "^11.0.0",
-    "semantic-release": "^24.0.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.6",
+    "@semantic-release/npm": "^13.1.5",
+    "semantic-release": "^25.0.3",
     "typescript": "^5.7.0",
     "vitest": "^4.0.0"
   },
