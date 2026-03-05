@@ -27,7 +27,7 @@
 ## 已按 MCP 工具参数落地
 - 新增工具：`search_by_mql`
 - 参数对齐：`project_key`（必填）、`moql`、`session_id`、`group_pagination_list`
-- 调用方式：通过 `fetch` 调 `mcpBaseUrl`（默认 `https://project.feishu.cn/mcp_server/v1`）
+- 调用方式：通过 `fetch` 调固定地址 `https://project.feishu.cn/mcp_server/v1`
 - 工具名对齐 MCP：`mcp__feishu-project__search_by_mql`
 
 ## 下一步建议

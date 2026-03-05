@@ -28,11 +28,6 @@
         "type": "string",
         "default": "https://project.feishu.cn",
         "title": "Project Base URL"
-      },
-      "mcpBaseUrl": {
-        "type": "string",
-        "default": "https://project.feishu.cn/mcp_server/v1",
-        "title": "MCP Base URL"
       }
     }
   },
@@ -53,10 +48,6 @@
     "baseUrl": {
       "label": "Project Base URL",
       "placeholder": "https://project.feishu.cn"
-    },
-    "mcpBaseUrl": {
-      "label": "MCP Base URL",
-      "placeholder": "https://project.feishu.cn/mcp_server/v1"
     }
   }
 }

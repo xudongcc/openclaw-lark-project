@@ -6,13 +6,12 @@ type PluginConfig = {
   pluginSecret: string;
   userId: string;
   baseUrl?: string;
-  mcpBaseUrl?: string;
 };
 
 export default function register(api: any) {
   const cfg = (api?.config || {}) as PluginConfig;
   const baseUrl = cfg.baseUrl || "https://project.feishu.cn";
-  const mcpBaseUrl = cfg.mcpBaseUrl || "https://project.feishu.cn/mcp_server/v1";
+  const mcpBaseUrl = "https://project.feishu.cn/mcp_server/v1";
 
   const tokenManager = new TokenManager({
     baseUrl,
