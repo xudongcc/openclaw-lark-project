@@ -1,0 +1,53 @@
+{
+  "id": "lark-project-workitem",
+  "name": "Lark Project Workitem Manager",
+  "version": "0.1.0",
+  "description": "Manage Feishu Project work items via configurable credentials.",
+  "entry": "./src/index.ts",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["pluginId", "pluginSecret", "userId"],
+    "properties": {
+      "pluginId": {
+        "type": "string",
+        "minLength": 1,
+        "title": "Plugin ID"
+      },
+      "pluginSecret": {
+        "type": "string",
+        "minLength": 1,
+        "title": "Plugin Secret"
+      },
+      "userId": {
+        "type": "string",
+        "minLength": 1,
+        "title": "User ID"
+      },
+      "baseUrl": {
+        "type": "string",
+        "default": "https://project.feishu.cn",
+        "title": "Project Base URL"
+      }
+    }
+  },
+  "uiHints": {
+    "pluginId": {
+      "label": "Plugin ID",
+      "placeholder": "例如: cli_xxx"
+    },
+    "pluginSecret": {
+      "label": "Plugin Secret",
+      "placeholder": "输入插件密钥",
+      "sensitive": true
+    },
+    "userId": {
+      "label": "User ID",
+      "placeholder": "例如: ou_xxx"
+    },
+    "baseUrl": {
+      "label": "Project Base URL",
+      "placeholder": "https://project.feishu.cn"
+    }
+  }
+}
