@@ -24,8 +24,14 @@
   2. 文件权限限制为 `600`
   3. 仅保存短期 token + 过期时间，不保存更多敏感上下文
 
+## 已按 MCP 工具参数落地
+- 新增工具：`search_by_mql`
+- 参数对齐：`project_key`（必填）、`moql`、`session_id`、`group_pagination_list`
+- 调用方式：通过 `fetch` 调 `mcpBaseUrl`（默认 `https://project.feishu.cn/mcp_server/v1`）
+- 工具名对齐 MCP：`mcp__feishu-project__search_by_mql`
+
 ## 下一步建议
-1. 定义 `workitem_list`（支持按状态、负责人筛选）
-2. 定义 `workitem_get`
-3. 定义 `workitem_update_status`
-4. 再补充字段映射（状态、负责人、优先级、截止时间）
+1. 新增 `get_workitem_info`（先查空间+工作项类型字段）
+2. 再加 `workitem_list`（自动拼 MOQL）
+3. 加 `workitem_update_status`（按工作项 ID 更新状态）
+4. 补一批常用 MOQL 模板（按负责人、状态、时间）
