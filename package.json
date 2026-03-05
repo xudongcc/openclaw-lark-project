@@ -1,0 +1,17 @@
+{
+  "name": "@openclaw/lark-project-workitem",
+  "version": "0.1.0",
+  "description": "OpenClaw plugin for Lark Project workitem description updates",
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "openclaw.plugin.json",
+    "README.md"
+  ],
+  "openclaw": {
+    "extensions": [
+      "./dist/index.js"
+    ]
+  },
+  "license": "MIT"
+}

@@ -3,7 +3,7 @@
   "name": "Lark Project Workitem Manager",
   "version": "0.1.0",
   "description": "Manage Feishu Project work items via configurable credentials.",
-  "entry": "./src/index.ts",
+  "entry": "./dist/index.js",
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
