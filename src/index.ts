@@ -102,6 +102,7 @@ export default function register(api: any) {
     required: ["work_item_id"],
     properties: {
       work_item_id: { type: "string" },
+      work_item_type: { type: "string", description: "建议传，便于定位 OpenAPI 路径" },
       project_key: { type: "string" },
       url: { type: "string" },
       fields: {
@@ -142,6 +143,7 @@ export default function register(api: any) {
     required: ["work_item_id", "node_id"],
     properties: {
       work_item_id: { type: "string" },
+      work_item_type: { type: "string", description: "建议传，便于定位 OpenAPI 路径" },
       node_id: { type: "string" },
       project_key: { type: "string" },
       url: { type: "string" },
@@ -153,6 +155,7 @@ export default function register(api: any) {
     required: ["work_item_id", "node_id"],
     properties: {
       work_item_id: { type: "string" },
+      work_item_type: { type: "string", description: "建议传，便于定位 OpenAPI 路径" },
       node_id: { type: "string" },
       project_key: { type: "string" },
       url: { type: "string" },
@@ -176,6 +179,7 @@ export default function register(api: any) {
     required: ["work_item_id"],
     properties: {
       work_item_id: { type: "string" },
+      work_item_type: { type: "string", description: "建议传，便于定位 OpenAPI 路径" },
       project_key: { type: "string" },
       url: { type: "string" },
       fields: { type: "array", items: { type: "string" } },
