@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.2.0...v1.2.1) (2026-03-06)
+
+
+### Bug Fixes
+
+* resolve plugin config from full openclaw config object ([5b2f840](https://github.com/xudongcc/openclaw-lark-project/commit/5b2f840c78cfc82749192297fbdee1124d8c693d))
+
 # [1.2.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.1.0...v1.2.0) (2026-03-06)
 
 
