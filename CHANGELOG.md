@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.1.0...v1.2.0) (2026-03-06)
+
+
+### Features
+
+* Update Lark Project skill documentation. ([a2d3af0](https://github.com/xudongcc/openclaw-lark-project/commit/a2d3af009264014cf011631f39d6f99647d4666f))
+
 # [1.1.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.0.0...v1.1.0) (2026-03-06)
 
 
