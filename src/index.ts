@@ -20,7 +20,12 @@ function wrapError(tool: string, err: any) {
 }
 
 export default function register(api: any) {
-  const cfg = (api?.config || {}) as PluginConfig;
+  // api.config 可能是完整的 openclaw 配置对象，插件自身的 config 在
+  // api.config.plugins.entries["openclaw-lark-project"].config 下面；
+  // 也可能直接就是插件的 config（取决于 openclaw 版本/调用方式）。
+  const raw = api?.config || {};
+  const pluginEntry = raw?.plugins?.entries?.["openclaw-lark-project"]?.config;
+  const cfg = (pluginEntry || raw) as PluginConfig;
 
   const client = new LarkProject({
     pluginId: cfg.pluginId,
