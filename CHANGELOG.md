@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.2.1...v1.3.0) (2026-03-06)
+
+
+### Features
+
+* restructure plugin as object-style export with unified tool ([a62e087](https://github.com/xudongcc/openclaw-lark-project/commit/a62e08729af9ee51d6310d099d19655ce09e2aec))
+
 ## [1.2.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.2.0...v1.2.1) (2026-03-06)
 
 
