@@ -1,14 +1,32 @@
-/**
- * Options for initializing a {@link LarkProject} client.
- */
-export type LarkProjectOptions = {
-  /** 飞书项目插件 ID，格式如 `MII_*` */
-  pluginId: string;
-  /** 飞书项目插件密钥 */
-  pluginSecret: string;
-  /** 用户标识，格式如 `ou_*` 或 `user_*` */
-  userKey: string;
-};
+import type {
+  LarkProjectOptions,
+  WorkItemLocator,
+  CreateWorkItemCommentParams,
+  ListWorkItemCommentsParams,
+  DeleteWorkItemCommentParams,
+  UpdateWorkItemFieldParams,
+  UpdateWorkItemRoleOwnersParams,
+  ListBusinessesParams,
+  GetWorkItemWorkflowParams,
+  ConfirmNodeParams,
+  RollbackNodeParams,
+  ChangeStateParams,
+  CreateWorkItemParams,
+  AbortWorkItemParams,
+  CreateWorkItemCommentResult,
+  ListWorkItemCommentsResult,
+  DeleteWorkItemCommentResult,
+  UpdateWorkItemFieldResult,
+  UpdateWorkItemRoleOwnersResult,
+  ListBusinessesResult,
+  GetWorkItemWorkflowResult,
+  ConfirmNodeResult,
+  RollbackNodeResult,
+  ChangeStateResult,
+  CreateWorkItemResult,
+  AbortWorkItemResult,
+  LarkProjectResponse,
+} from "./types";
 
 /** @internal */
 type TokenCacheEntry = {
@@ -145,12 +163,12 @@ export class LarkProject {
    *
    * @internal
    */
-  private async request(options: {
+  private async request<T = unknown>(options: {
     method: "GET" | "POST" | "PUT" | "DELETE";
     path: string;
     query?: Record<string, string | number | undefined>;
     body?: any;
-  }) {
+  }): Promise<LarkProjectResponse<T>> {
     const token = await this.getPluginAccessToken();
     const qs = options.query
       ? "?" +
@@ -188,10 +206,10 @@ export class LarkProject {
       );
     }
 
-    const code = json?.code;
+    const code = json?.err_code ?? json?.code;
     if (typeof code === "number" && code !== 0) {
       throw new Error(
-        `OpenAPI ${options.method} ${options.path} business failed: code=${code}; msg=${json?.msg || "unknown"}`,
+        `OpenAPI ${options.method} ${options.path} business failed: code=${code}; msg=${json?.err_msg || json?.msg || "unknown"}`,
       );
     }
 
@@ -210,13 +228,7 @@ export class LarkProject {
    *
    * @internal
    */
-  private resolveWorkItem(params: {
-    url?: string;
-    project_key?: string;
-    work_item_type?: string;
-    work_item_type_key?: string;
-    work_item_id?: string;
-  }) {
+  private resolveWorkItem(params: WorkItemLocator) {
     const parsed = parseWorkItemUrl(params.url);
     const projectKey = params.project_key || parsed.project_key;
     const workItemTypeKey =
@@ -238,50 +250,7 @@ export class LarkProject {
   }
 
   /**
-   * 更新工作项描述字段。
-   *
-   * @remarks
-   * 用于补充 MCP `update_field` 在描述字段上的限制。
-   *
-   * @param params - 工作项定位参数 + 描述内容
-   * @param params.description - 描述内容（支持 markdown）
-   * @param params.field_key - 描述字段 key，默认 `"description"`
-   * @returns API 响应体
-   * @throws 当 `description` 为空时抛出异常
-   */
-  async updateWorkItemDescription(params: {
-    url?: string;
-    project_key?: string;
-    work_item_type?: string;
-    work_item_type_key?: string;
-    work_item_id?: string;
-    description: string;
-    field_key?: string;
-  }) {
-    const { projectKey, workItemTypeKey, workItemId } =
-      this.resolveWorkItem(params);
 
-    if (typeof params.description !== "string" || !params.description.trim()) {
-      throw new Error("description 不能为空");
-    }
-
-    const fieldKey = params.field_key || "description";
-
-    return this.request({
-      method: "PUT",
-      path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}`,
-      body: {
-        update_fields: [
-          {
-            field_key: fieldKey,
-            field_value: params.description,
-          },
-        ],
-      },
-    });
-  }
-
-  /**
    * 在工作项下添加一条纯文本评论。
    *
    * @param params - 工作项定位参数 + 评论内容
@@ -289,14 +258,9 @@ export class LarkProject {
    * @returns API 响应体，`data` 字段为新评论 ID
    * @throws 当 `content` 为空时抛出异常
    */
-  async createWorkItemComment(params: {
-    url?: string;
-    project_key?: string;
-    work_item_type?: string;
-    work_item_type_key?: string;
-    work_item_id?: string;
-    content: string;
-  }) {
+  async createWorkItemComment(
+    params: CreateWorkItemCommentParams,
+  ): Promise<CreateWorkItemCommentResult> {
     const { projectKey, workItemTypeKey, workItemId } =
       this.resolveWorkItem(params);
 
@@ -317,13 +281,9 @@ export class LarkProject {
    * @param params - 工作项定位参数
    * @returns API 响应体，`data` 字段为评论数组
    */
-  async listWorkItemComments(params: {
-    url?: string;
-    project_key?: string;
-    work_item_type?: string;
-    work_item_type_key?: string;
-    work_item_id?: string;
-  }) {
+  async listWorkItemComments(
+    params: ListWorkItemCommentsParams,
+  ): Promise<ListWorkItemCommentsResult> {
     const { projectKey, workItemTypeKey, workItemId } =
       this.resolveWorkItem(params);
 
@@ -344,14 +304,9 @@ export class LarkProject {
    * @returns API 响应体
    * @throws 当 `comment_id` 为空时抛出异常
    */
-  async deleteWorkItemComment(params: {
-    url?: string;
-    project_key?: string;
-    work_item_type?: string;
-    work_item_type_key?: string;
-    work_item_id?: string;
-    comment_id: string;
-  }) {
+  async deleteWorkItemComment(
+    params: DeleteWorkItemCommentParams,
+  ): Promise<DeleteWorkItemCommentResult> {
     const { projectKey, workItemTypeKey, workItemId } =
       this.resolveWorkItem(params);
 
@@ -377,14 +332,9 @@ export class LarkProject {
    * @returns API 响应体
    * @throws 当 `update_fields` 为空时抛出异常
    */
-  async updateWorkItemField(params: {
-    url?: string;
-    project_key?: string;
-    work_item_type?: string;
-    work_item_type_key?: string;
-    work_item_id?: string;
-    update_fields: { field_key: string; field_value: unknown }[];
-  }) {
+  async updateWorkItemField(
+    params: UpdateWorkItemFieldParams,
+  ): Promise<UpdateWorkItemFieldResult> {
     const { projectKey, workItemTypeKey, workItemId } =
       this.resolveWorkItem(params);
 
@@ -416,14 +366,9 @@ export class LarkProject {
    * @returns API 响应体
    * @throws 当 `role_owners` 为空时抛出异常
    */
-  async updateWorkItemRoleOwners(params: {
-    url?: string;
-    project_key?: string;
-    work_item_type?: string;
-    work_item_type_key?: string;
-    work_item_id?: string;
-    role_owners: { role: string; owners: string[] }[];
-  }) {
+  async updateWorkItemRoleOwners(
+    params: UpdateWorkItemRoleOwnersParams,
+  ): Promise<UpdateWorkItemRoleOwnersResult> {
     const { projectKey, workItemTypeKey, workItemId } =
       this.resolveWorkItem(params);
 
@@ -455,14 +400,245 @@ export class LarkProject {
    * @param params - 包含 project_key 的参数
    * @returns API 响应体，`data` 字段为业务线数组
    */
-  async listBusinesses(params: { project_key: string }) {
+  async listBusinesses(
+    params: ListBusinessesParams,
+  ): Promise<ListBusinessesResult> {
     if (!params.project_key) {
       throw new Error("缺少 project_key");
     }
 
     return this.request({
       method: "GET",
-      path: `/open_api/${params.project_key}/business`,
+      path: `/open_api/${params.project_key}/business/all`,
+    });
+  }
+
+  /**
+   * 获取工作项的工作流详情。
+   *
+   * @remarks
+   * 返回节点列表、当前节点状态、负责人、排期等信息。
+   * 用于流转前获取 `node_id` / `state_key`。
+   *
+   * @param params - 工作项定位参数
+   * @returns API 响应体，包含工作流节点信息
+   */
+  async getWorkItemWorkflow(
+    params: GetWorkItemWorkflowParams,
+  ): Promise<GetWorkItemWorkflowResult> {
+    const { projectKey, workItemTypeKey, workItemId } =
+      this.resolveWorkItem(params);
+
+    // 先尝试节点流 /workflow/query (flow_type 默认 0)
+    try {
+      return await this.request({
+        method: "POST",
+        path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/workflow/query`,
+      });
+    } catch (err: any) {
+      // 状态流会返回 20026 FlowType Is Error
+      const isStateFlow = err?.message?.includes("20026");
+      if (!isStateFlow) throw err;
+    }
+
+    // 状态流：flow_type=1
+    return this.request({
+      method: "POST",
+      path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/workflow/query`,
+      body: { flow_type: 1 },
+    });
+  }
+
+  /**
+   * 完成节点（节点流）。
+   *
+   * @remarks
+   * 将状态为「已到达」（status=2）的节点标记为完成。
+   * 可同时更新节点负责人、排期和表单字段。
+   *
+   * @param params - 工作项定位参数 + 节点参数
+   * @param params.node_id - 目标节点 ID (state_key)
+   * @returns API 响应体
+   * @throws 当缺少 node_id 时抛出异常
+   */
+  async confirmNode(params: ConfirmNodeParams): Promise<ConfirmNodeResult> {
+    const { projectKey, workItemTypeKey, workItemId } =
+      this.resolveWorkItem(params);
+
+    if (!params.node_id) {
+      throw new Error("缺少 node_id");
+    }
+
+    const body: Record<string, unknown> = { action: "confirm" };
+    if (params.node_owners) body.node_owners = params.node_owners;
+    if (params.node_schedule) body.node_schedule = params.node_schedule;
+    if (params.fields) body.fields = params.fields;
+    if (params.role_assignee) body.role_assignee = params.role_assignee;
+
+    return this.request({
+      method: "POST",
+      path: `/open_api/${projectKey}/workflow/${workItemTypeKey}/${workItemId}/node/${params.node_id}/operate`,
+      body,
+    });
+  }
+
+  /**
+   * 回滚节点（节点流）。
+   *
+   * @remarks
+   * 将已完成的节点回滚到「已到达」状态。
+   *
+   * @param params - 工作项定位参数 + 节点参数
+   * @param params.node_id - 目标节点 ID (state_key)
+   * @param params.rollback_reason - 回滚原因（必填）
+   * @returns API 响应体
+   * @throws 当缺少 node_id 或 rollback_reason 时抛出异常
+   */
+  async rollbackNode(params: RollbackNodeParams): Promise<RollbackNodeResult> {
+    const { projectKey, workItemTypeKey, workItemId } =
+      this.resolveWorkItem(params);
+
+    if (!params.node_id) {
+      throw new Error("缺少 node_id");
+    }
+    if (!params.rollback_reason) {
+      throw new Error("缺少 rollback_reason");
+    }
+
+    return this.request({
+      method: "POST",
+      path: `/open_api/${projectKey}/workflow/${workItemTypeKey}/${workItemId}/node/${params.node_id}/operate`,
+      body: {
+        action: "rollback",
+        rollback_reason: params.rollback_reason,
+      },
+    });
+  }
+
+  /**
+   * 状态流转（状态流）。
+   *
+   * @remarks
+   * 用于将工作项实例流转到指定状态。
+   * 可同时更新表单字段和角色人员。
+   *
+   * @param params - 工作项定位参数 + 状态流转参数
+   * @param params.transition_id - 流转 ID，可通过获取工作流详情获取
+   * @returns API 响应体
+   * @throws 当缺少 transition_id 时抛出异常
+   */
+  async changeState(params: ChangeStateParams): Promise<ChangeStateResult> {
+    const { projectKey, workItemTypeKey, workItemId } =
+      this.resolveWorkItem(params);
+
+    if (!params.transition_id) {
+      throw new Error("缺少 transition_id");
+    }
+
+    const body: Record<string, unknown> = {
+      transition_id: Number(params.transition_id),
+    };
+    if (params.fields) body.fields = params.fields;
+    if (params.role_owners) body.role_owners = params.role_owners;
+
+    return this.request({
+      method: "POST",
+      path: `/open_api/${projectKey}/workflow/${workItemTypeKey}/${workItemId}/node/state_change`,
+      body,
+    });
+  }
+
+  /**
+   * 创建工作项实例。
+   *
+   * @remarks
+   * 在指定空间和工作项类型下新增一个实例。支持从 fields 提取 name，兼容 MCP 工具定义。
+   *
+   * @param params - 创建参数
+   * @returns API 响应体，成功时 data 为新工作项 ID
+   */
+  async createWorkItem(
+    params: CreateWorkItemParams,
+  ): Promise<CreateWorkItemResult> {
+    const parsed = parseWorkItemUrl(params.url);
+    const projectKey = params.project_key || parsed.project_key;
+    const workItemTypeKey =
+      params.work_item_type ||
+      params.work_item_type_key ||
+      parsed.work_item_type;
+
+    if (!projectKey) {
+      throw new Error("缺少 project_key");
+    }
+    if (!workItemTypeKey) {
+      throw new Error("缺少 work_item_type_key");
+    }
+
+    let name = params.name;
+    const fields = params.field_value_pairs || [];
+
+    if (!name) {
+      const nameField = fields.find((f: any) => f.field_key === "name");
+      if (nameField && typeof nameField.field_value === "string") {
+        name = nameField.field_value;
+      }
+    }
+
+    if (!name) {
+      throw new Error("缺少 name");
+    }
+
+    const body: Record<string, unknown> = {
+      work_item_type_key: workItemTypeKey,
+      name,
+    };
+
+    const validFields = fields.filter((f: any) => f.field_key !== "name");
+    if (validFields.length > 0) {
+      body.field_value_pairs = validFields.map((f: any) => ({
+        field_key: f.field_key,
+        field_value: f.field_value,
+        field_type_key: f.field_type_key,
+      }));
+    }
+
+    if (params.template_id) {
+      body.template_id = params.template_id;
+    }
+
+    return this.request({
+      method: "POST",
+      path: `/open_api/${projectKey}/work_item/create`,
+      body,
+    });
+  }
+
+  /**
+   * 删除（终止）工作项实例。
+   *
+   * @remarks
+   * 飞书项目不提供真正的删除 API，使用终止（abort）代替。
+   * 终止后可通过 is_aborted=false 恢复。
+   *
+   * @param params - 工作项定位参数
+   * @param params.is_aborted - true 终止，false 恢复（默认 true）
+   * @param params.reason - 终止/恢复原因
+   * @returns API 响应体
+   */
+  async abortWorkItem(
+    params: AbortWorkItemParams,
+  ): Promise<AbortWorkItemResult> {
+    const { projectKey, workItemTypeKey, workItemId } =
+      this.resolveWorkItem(params);
+
+    return this.request({
+      method: "PUT",
+      path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/abort`,
+      body: {
+        is_aborted: params.is_aborted !== false,
+        reason: params.reason || "API 终止",
+        reason_option: "other",
+      },
     });
   }
 }

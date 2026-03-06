@@ -8,4 +8,5 @@ export default defineConfig({
       reporter: ["text", "lcov"],
     },
   },
+  envPrefix: "LARK_PROJECT_",
 });
