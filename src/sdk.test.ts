@@ -74,18 +74,23 @@ describe.skipIf(skip)("LarkProject", () => {
     });
   });
 
-  // ── 描述更新 ──────────────────────────────────────────
+  // ── 描述更新（通过 updateWorkItemField） ─────────────────
 
-  describe("updateWorkItemDescription", () => {
-    it("should throw when description is empty", async () => {
-      await expect(
-        client.updateWorkItemDescription({
-          project_key: PROJECT_KEY,
-          work_item_type: WORK_ITEM_TYPE,
-          work_item_id: workItemId,
-          description: "  ",
-        }),
-      ).rejects.toThrow("description 不能为空");
+  describe("updateDescription via updateWorkItemField", () => {
+    it("should update description field", async () => {
+      const result = await client.updateWorkItemField({
+        project_key: PROJECT_KEY,
+        work_item_type: WORK_ITEM_TYPE,
+        work_item_id: workItemId,
+        update_fields: [
+          {
+            field_key: "description",
+            field_value: `# 测试描述\n\n更新于 ${new Date().toISOString()}`,
+          },
+        ],
+      });
+
+      expect(result.err_code).toBe(0);
     });
   });
 
@@ -202,9 +207,7 @@ describe.skipIf(skip)("LarkProject", () => {
       const roleOwners = roleField?.field_value;
 
       if (!Array.isArray(roleOwners) || roleOwners.length === 0) {
-        console.log(
-          "跳过 role_owners 更新测试：无法从工作项详情获取角色信息",
-        );
+        console.log("跳过 role_owners 更新测试：无法从工作项详情获取角色信息");
         return;
       }
 
@@ -215,6 +218,75 @@ describe.skipIf(skip)("LarkProject", () => {
         work_item_type: WORK_ITEM_TYPE,
         work_item_id: workItemId,
         role_owners: [{ role: firstRole, owners: [USER_KEY] }],
+      });
+
+      expect(result.err_code).toBe(0);
+    });
+  });
+
+  // ── 业务线 ──────────────────────────────────────────
+
+  describe("listBusinesses", () => {
+    it("should throw when project_key is empty", async () => {
+      await expect(
+        client.listBusinesses({ project_key: "" }),
+      ).rejects.toThrow("缺少 project_key");
+    });
+
+    it("should list businesses for the project", async () => {
+      const result = await client.listBusinesses({
+        project_key: PROJECT_KEY,
+      });
+
+      expect(result.err_code).toBe(0);
+      expect(Array.isArray(result.data)).toBe(true);
+      console.log(
+        `业务线列表: ${JSON.stringify(result.data?.map((b: any) => ({ id: b.id, name: b.name })))}`,
+      );
+    });
+  });
+
+  // ── 通用字段更新（业务线） ─────────────────────────────
+
+  describe("updateWorkItemField", () => {
+    it("should throw when update_fields is empty", async () => {
+      await expect(
+        client.updateWorkItemField({
+          project_key: PROJECT_KEY,
+          work_item_type: WORK_ITEM_TYPE,
+          work_item_id: workItemId,
+          update_fields: [],
+        }),
+      ).rejects.toThrow("update_fields 不能为空");
+    });
+
+    it("should update business field", async () => {
+      // 先获取业务线列表，找到第一个业务线 ID
+      const bizResult = await client.listBusinesses({
+        project_key: PROJECT_KEY,
+      });
+
+      const businesses = bizResult?.data || [];
+      if (!Array.isArray(businesses) || businesses.length === 0) {
+        console.log("跳过业务线更新测试：空间下无业务线");
+        return;
+      }
+
+      const targetBizId = String(businesses[0].id);
+      console.log(
+        `使用业务线: ${businesses[0].name} (${targetBizId})`,
+      );
+
+      const result = await client.updateWorkItemField({
+        project_key: PROJECT_KEY,
+        work_item_type: WORK_ITEM_TYPE,
+        work_item_id: workItemId,
+        update_fields: [
+          {
+            field_key: "business",
+            field_value: targetBizId,
+          },
+        ],
       });
 
       expect(result.err_code).toBe(0);

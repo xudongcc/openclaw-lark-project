@@ -28,12 +28,6 @@ const WorkItemLocator = {
  */
 const LarkProjectToolSchema = z.discriminatedUnion("action", [
   z.object({
-    action: z.literal("update_work_item_description"),
-    ...WorkItemLocator,
-    description: z.string().describe("要写入的描述内容（支持 markdown）"),
-    field_key: z.string().describe("描述字段 key，默认 description").optional(),
-  }),
-  z.object({
     action: z.literal("create_work_item_comment"),
     ...WorkItemLocator,
     content: z.string().describe("评论内容（纯文本）"),
@@ -58,6 +52,22 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
         }),
       )
       .describe("角色人员列表（覆盖更新，需传入全部角色）"),
+  }),
+  z.object({
+    action: z.literal("update_work_item_field"),
+    ...WorkItemLocator,
+    update_fields: z
+      .array(
+        z.object({
+          field_key: z.string().describe("字段 key，如 business、priority"),
+          field_value: z.any().describe("字段值，格式取决于字段类型"),
+        }),
+      )
+      .describe("要更新的字段列表"),
+  }),
+  z.object({
+    action: z.literal("list_businesses"),
+    project_key: z.string().describe("空间 project_key"),
   }),
 ]);
 
@@ -106,7 +116,7 @@ const larkProjectPlugin = {
   id: "openclaw-lark-project",
   name: "Lark Project",
   description:
-    "飞书项目工作项描述更新与评论管理，补充 MCP update_field 在描述字段上的限制。",
+    "飞书项目工作项字段更新、评论管理、角色人员修改、业务线查询。",
   configSchema,
 
   /**
@@ -136,7 +146,7 @@ const larkProjectPlugin = {
         name: "lark_project",
         label: "Lark Project",
         description:
-          "管理飞书项目工作项：更新描述、修改角色人员、添加/查询/删除评论。通过 action 字段选择操作。",
+          "管理飞书项目工作项：更新字段（含描述、业务线等）、修改角色人员、添加/查询/删除评论、获取业务线列表。通过 action 字段选择操作。",
         parameters: z.toJSONSchema(LarkProjectToolSchema),
 
         async execute(
@@ -145,8 +155,6 @@ const larkProjectPlugin = {
         ) {
           try {
             switch (params.action) {
-              case "update_work_item_description":
-                return json(await client.updateWorkItemDescription(params));
 
               case "create_work_item_comment":
                 return json(await client.createWorkItemComment(params));
@@ -159,6 +167,16 @@ const larkProjectPlugin = {
 
               case "update_work_item_role_owners":
                 return json(await client.updateWorkItemRoleOwners(params));
+
+              case "update_work_item_field":
+                return json(await client.updateWorkItemField(params));
+
+              case "list_businesses":
+                return json(
+                  await client.listBusinesses({
+                    project_key: params.project_key,
+                  }),
+                );
 
               default:
                 return json({

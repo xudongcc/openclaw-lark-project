@@ -6,7 +6,10 @@ description: |
 
 # 飞书项目工具
 
-本技能使用两类工具协作：**MCP 工具**（通过 mcporter 调用）负责查询、创建、更新字段等主要操作；**插件工具** `lark_project` 补充 MCP 不支持的描述更新和评论管理。
+本技能使用两类工具协作：
+
+1. **MCP 工具**（通过 mcporter 调用）负责查询、创建等主要操作。
+2. **插件工具** `lark_project` 负责更新字段（含描述、业务线等）、修改角色人员、管理评论等写操作。
 
 ## 基本原则
 
@@ -45,7 +48,6 @@ mcporter list lark-project --schema
 | `create_workitem`    | 创建工作项实例                         |
 | `get_workitem_brief` | 获取工作项概况                         |
 | `get_workitem_info`  | 获取工作项类型的可用字段与角色信息     |
-| `update_field`       | 修改工作项字段值（支持批量）           |
 | `search_by_mql`      | 使用 MOQL 查询工作项                   |
 | `get_view_detail`    | 获取指定视图内容                       |
 | `get_node_detail`    | 获取节点详情（信息、子项、自定义字段） |
@@ -56,30 +58,68 @@ mcporter list lark-project --schema
 
 ### 注意事项
 
-- **描述字段限制：** `update_field` 不支持更新描述（会报 `can not support fields: 描述`），需改用插件工具 `lark_project`。
+- **MCP 仅用于查询和读操作。** 所有字段更新（包括描述、业务线、优先级等）均使用插件工具 `lark_project`。
 - **MOQL 查询：** 使用可读性强的中文字段名称编写查询，先调用 `get_workitem_info` 确认可用字段。
 - 时间类字段需传 16 位 unix 毫秒时间戳，人员类字段需用英文逗号分隔。
 
 ## 插件工具（lark_project）
 
-单一工具 `lark_project`，通过 `action` 字段分发五种操作，补充 MCP 不支持的功能。
+单一工具 `lark_project`，通过 `action` 字段分发五种操作。
 
 ### 工作项定位（所有 action 通用）
 
 - **方式 A（推荐）**：传 `url`，如 `https://project.feishu.cn/<project_key>/<type>/detail/<id>`
 - **方式 B**：同时传 `project_key` + `work_item_type` + `work_item_id`
 
-### update_work_item_description — 更新描述
+### update_work_item_field — 更新任意字段
 
 ```json
 {
-  "action": "update_work_item_description",
+  "action": "update_work_item_field",
   "url": "https://project.feishu.cn/xxx/story/detail/123",
-  "description": "# 新描述\n\nMarkdown 内容..."
+  "update_fields": [
+    { "field_key": "priority", "field_value": { "label": "P0", "value": "0" } }
+  ]
 }
 ```
 
-可选 `field_key`（默认 `"description"`）。
+用于更新工作项的任意字段。字段 key 和值的格式可通过 MCP `get_workitem_info` 获取。
+
+> **⚠️ 各字段类型的 `field_value` 格式：**
+>
+> | 字段类型            | field_value 格式                  | 示例                              |
+> | ------------------- | --------------------------------- | --------------------------------- |
+> | 单选（priority 等） | `{ "label": "P0", "value": "0" }` | `{ "label": "P0", "value": "0" }` |
+> | 业务线（business）  | 业务线 ID 字符串（**不是名称**）  | `"662f0e13b1a20d5dd5fb3320"`      |
+> | 单行文本            | 字符串                            | `"文本内容"`                      |
+> | 数字                | 数值                              | `11.11`                           |
+> | 单选人员            | user_key 字符串                   | `"7356795280xxx"`                 |
+> | 多选人员            | user_key 字符串数组               | `["735xxx", "731xxx"]`            |
+> | 日期                | 毫秒时间戳                        | `1722182400000`                   |
+> | 描述（description） | 字符串（支持 markdown）           | `"# 标题\n内容"`                  |
+
+#### 更新业务线的正确流程
+
+业务线 `field_value` 必须传**业务线 ID**，不能传业务线名称。获取正确 ID 的步骤：
+
+1. 先通过插件工具获取业务线列表：
+   ```json
+   {
+     "action": "list_businesses",
+     "project_key": "xxx"
+   }
+   ```
+2. 从返回结果中找到目标业务线的 `id`。
+3. 用该 ID 作为 `field_value` 更新：
+   ```json
+   {
+     "action": "update_work_item_field",
+     "url": "https://project.feishu.cn/xxx/story/detail/123",
+     "update_fields": [
+       { "field_key": "business", "field_value": "662f0e13b1a20d5dd5fb3320" }
+     ]
+   }
+   ```
 
 ### create_work_item_comment — 添加评论
 
@@ -127,20 +167,37 @@ mcporter list lark-project --schema
 
 `role_owners` 为覆盖更新，需传入所有角色及对应 `user_key` 列表。角色 ID 可通过 MCP `get_workitem_info` 获取。
 
+### list_businesses — 获取空间下业务线列表
+
+```json
+{
+  "action": "list_businesses",
+  "project_key": "xxx"
+}
+```
+
+返回当前空间下所有业务线的 `id` 和 `name`，用于更新业务线字段时查找正确的业务线 ID。
+
 ## 标准流程
 
-### 更新标题/字段
+### 更新字段
 
 1. 用 URL 确认目标工作项。
 2. `get_workitem_brief` 读取当前值。
-3. `update_field` 提交修改。
+3. 使用插件 `lark_project`（action=`update_work_item_field`）提交修改。
+4. `get_workitem_brief` 回读验证。
+
+### 更新业务线
+
+1. `list_businesses` 获取空间下业务线列表，找到目标业务线的 ID。
+2. `get_workitem_brief` 读取当前值。
+3. 使用 `update_work_item_field`（`field_key=business`，`field_value=业务线ID`）更新。
 4. `get_workitem_brief` 回读验证。
 
 ### 更新描述
 
-1. 先尝试 MCP `update_field`（`field_key=description`）。
-2. 若报 `can not support fields: 描述`，改用插件工具 `lark_project`（action=`update_work_item_description`）。
-3. 回读验证描述已更新。
+1. 使用 `update_work_item_field`（`field_key=description`，`field_value=描述内容`）更新。
+2. 回读验证描述已更新。
 
 ### 管理评论
 
@@ -167,10 +224,10 @@ mcporter list lark-project --schema
 
 ## 常见报错
 
-| 报错                                       | 处理                                                               |
-| ------------------------------------------ | ------------------------------------------------------------------ |
-| `can not support fields: 描述`             | 改用 `lark_project`（action=`update_work_item_description`）       |
-| `get plugin_access_token failed: HTTP 400` | 检查 `pluginId` / `pluginSecret` 配置                              |
-| `Record not found`                         | `comment_id` 不正确或评论已被删除                                  |
-| `permission denied`                        | 检查项目空间权限和账号租户                                         |
-| URL 解析失败                               | 校验格式：`https://project.feishu.cn/<project>/<type>/detail/<id>` |
+| 报错                                       | 处理                                                                         |
+| ------------------------------------------ | ---------------------------------------------------------------------------- |
+| `can not support fields: 描述`             | 使用插件 `lark_project`（`update_work_item_field`，`field_key=description`） |
+| `get plugin_access_token failed: HTTP 400` | 检查 `pluginId` / `pluginSecret` 配置                                        |
+| `Record not found`                         | `comment_id` 不正确或评论已被删除                                            |
+| `permission denied`                        | 检查项目空间权限和账号租户                                                   |
+| URL 解析失败                               | 校验格式：`https://project.feishu.cn/<project>/<type>/detail/<id>`           |

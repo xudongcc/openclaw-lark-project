@@ -366,6 +366,45 @@ export class LarkProject {
   }
 
   /**
+   * 更新工作项的任意字段（通用方法）。
+   *
+   * @remarks
+   * 通过「更新工作项」API 实现，可用于更新 MCP `update_field` 不支持的字段
+   * （如 `business` 业务线、`description` 描述等）。
+   *
+   * @param params - 工作项定位参数 + 要更新的字段列表
+   * @param params.update_fields - 字段数组，每项包含 `field_key` 和 `field_value`
+   * @returns API 响应体
+   * @throws 当 `update_fields` 为空时抛出异常
+   */
+  async updateWorkItemField(params: {
+    url?: string;
+    project_key?: string;
+    work_item_type?: string;
+    work_item_type_key?: string;
+    work_item_id?: string;
+    update_fields: { field_key: string; field_value: unknown }[];
+  }) {
+    const { projectKey, workItemTypeKey, workItemId } =
+      this.resolveWorkItem(params);
+
+    if (
+      !Array.isArray(params.update_fields) ||
+      params.update_fields.length === 0
+    ) {
+      throw new Error("update_fields 不能为空");
+    }
+
+    return this.request({
+      method: "PUT",
+      path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}`,
+      body: {
+        update_fields: params.update_fields,
+      },
+    });
+  }
+
+  /**
    * 修改工作项的角色人员（覆盖更新）。
    *
    * @remarks
@@ -403,6 +442,27 @@ export class LarkProject {
           },
         ],
       },
+    });
+  }
+
+  /**
+   * 获取空间下的业务线列表。
+   *
+   * @remarks
+   * 用于更新业务线字段时查找正确的业务线 ID。
+   * 业务线字段 `field_value` 必须传业务线 ID，而不是名称。
+   *
+   * @param params - 包含 project_key 的参数
+   * @returns API 响应体，`data` 字段为业务线数组
+   */
+  async listBusinesses(params: { project_key: string }) {
+    if (!params.project_key) {
+      throw new Error("缺少 project_key");
+    }
+
+    return this.request({
+      method: "GET",
+      path: `/open_api/${params.project_key}/business`,
     });
   }
 }
