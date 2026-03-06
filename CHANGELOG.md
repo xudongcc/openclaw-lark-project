@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.4.0...v1.5.0) (2026-03-06)
+
+
+### Features
+
+* Add business listing and enhance `updateWorkItemField` to support description and business fields, replacing `updateWorkItemDescription`. ([1d05f17](https://github.com/xudongcc/openclaw-lark-project/commit/1d05f170f38b3d0304f1c8538e590c744f859eea))
+
 # [1.4.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.3.0...v1.4.0) (2026-03-06)
 
 
