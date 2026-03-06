@@ -47,6 +47,18 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
     ...WorkItemLocator,
     comment_id: z.string().describe("要删除的评论 ID"),
   }),
+  z.object({
+    action: z.literal("update_work_item_role_owners"),
+    ...WorkItemLocator,
+    role_owners: z
+      .array(
+        z.object({
+          role: z.string().describe("角色 ID，如 rd、PM、QA"),
+          owners: z.array(z.string()).describe("user_key 列表"),
+        }),
+      )
+      .describe("角色人员列表（覆盖更新，需传入全部角色）"),
+  }),
 ]);
 
 /** 插件配置 Zod Schema。 */
@@ -124,7 +136,7 @@ const larkProjectPlugin = {
         name: "lark_project",
         label: "Lark Project",
         description:
-          "管理飞书项目工作项：更新描述、添加/查询/删除评论。通过 action 字段选择操作。",
+          "管理飞书项目工作项：更新描述、修改角色人员、添加/查询/删除评论。通过 action 字段选择操作。",
         parameters: z.toJSONSchema(LarkProjectToolSchema),
 
         async execute(
@@ -144,6 +156,9 @@ const larkProjectPlugin = {
 
               case "delete_work_item_comment":
                 return json(await client.deleteWorkItemComment(params));
+
+              case "update_work_item_role_owners":
+                return json(await client.updateWorkItemRoleOwners(params));
 
               default:
                 return json({

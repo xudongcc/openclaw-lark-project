@@ -62,7 +62,7 @@ mcporter list lark-project --schema
 
 ## 插件工具（lark_project）
 
-单一工具 `lark_project`，通过 `action` 字段分发四种操作，补充 MCP 不支持的功能。
+单一工具 `lark_project`，通过 `action` 字段分发五种操作，补充 MCP 不支持的功能。
 
 ### 工作项定位（所有 action 通用）
 
@@ -112,6 +112,21 @@ mcporter list lark-project --schema
 
 仅评论创建人可删除。通过 `list_work_item_comments` 获取 `comment_id`。
 
+### update_work_item_role_owners — 修改角色人员
+
+```json
+{
+  "action": "update_work_item_role_owners",
+  "url": "https://project.feishu.cn/xxx/story/detail/123",
+  "role_owners": [
+    { "role": "rd", "owners": ["ou_xxx"] },
+    { "role": "PM", "owners": ["ou_yyy"] }
+  ]
+}
+```
+
+`role_owners` 为覆盖更新，需传入所有角色及对应 `user_key` 列表。角色 ID 可通过 MCP `get_workitem_info` 获取。
+
 ## 标准流程
 
 ### 更新标题/字段
@@ -132,6 +147,15 @@ mcporter list lark-project --schema
 1. `list_work_item_comments` 查看现有评论。
 2. `create_work_item_comment` 添加新评论。
 3. `delete_work_item_comment` 删除评论（需提供 `comment_id`）。
+
+### 修改角色人员
+
+1. 用 URL 确认目标工作项。
+2. `get_workitem_brief` 读取当前角色人员。
+3. `lark_project`（action=`update_work_item_role_owners`）提交修改。
+4. `get_workitem_brief` 回读验证。
+
+> **注意**：`role_owners` 是覆盖更新，需传入所有角色及对应人员。
 
 ## 插件配置
 

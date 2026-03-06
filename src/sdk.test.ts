@@ -169,4 +169,55 @@ describe.skipIf(skip)("LarkProject", () => {
       expect(found).toBe(false);
     });
   });
+
+  // ── 角色人员 ──────────────────────────────────────────
+
+  describe("updateWorkItemRoleOwners", () => {
+    it("should throw when role_owners is empty", async () => {
+      await expect(
+        client.updateWorkItemRoleOwners({
+          project_key: PROJECT_KEY,
+          work_item_type: WORK_ITEM_TYPE,
+          work_item_id: workItemId,
+          role_owners: [],
+        }),
+      ).rejects.toThrow("role_owners 不能为空");
+    });
+
+    it("should update role owners", async () => {
+      // 先获取工作项详情，从 fields 中拿到 role_owners
+      const detail = await (client as any).request({
+        method: "POST",
+        path: `/open_api/${PROJECT_KEY}/work_item/${WORK_ITEM_TYPE}/query`,
+        body: {
+          work_item_ids: [Number(workItemId)],
+          fields: ["role_owners"],
+        },
+      });
+
+      const item = detail?.data?.[0];
+      const roleField = item?.fields?.find(
+        (f: any) => f.field_key === "role_owners",
+      );
+      const roleOwners = roleField?.field_value;
+
+      if (!Array.isArray(roleOwners) || roleOwners.length === 0) {
+        console.log(
+          "跳过 role_owners 更新测试：无法从工作项详情获取角色信息",
+        );
+        return;
+      }
+
+      // 用第一个角色做更新测试，将当前用户设为该角色的 owner
+      const firstRole = roleOwners[0].role;
+      const result = await client.updateWorkItemRoleOwners({
+        project_key: PROJECT_KEY,
+        work_item_type: WORK_ITEM_TYPE,
+        work_item_id: workItemId,
+        role_owners: [{ role: firstRole, owners: [USER_KEY] }],
+      });
+
+      expect(result.err_code).toBe(0);
+    });
+  });
 });

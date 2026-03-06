@@ -364,4 +364,45 @@ export class LarkProject {
       path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/comment/${params.comment_id}`,
     });
   }
+
+  /**
+   * 修改工作项的角色人员（覆盖更新）。
+   *
+   * @remarks
+   * 通过「更新工作项」API 的 `role_owners` 字段实现。
+   * **注意：这是覆盖更新**，调用时需传入所有角色及其人员，未传入的角色人员会被清空。
+   *
+   * @param params - 工作项定位参数 + 角色人员列表
+   * @param params.role_owners - 角色人员数组，每项包含 `role`（角色 ID）和 `owners`（user_key 列表）
+   * @returns API 响应体
+   * @throws 当 `role_owners` 为空时抛出异常
+   */
+  async updateWorkItemRoleOwners(params: {
+    url?: string;
+    project_key?: string;
+    work_item_type?: string;
+    work_item_type_key?: string;
+    work_item_id?: string;
+    role_owners: { role: string; owners: string[] }[];
+  }) {
+    const { projectKey, workItemTypeKey, workItemId } =
+      this.resolveWorkItem(params);
+
+    if (!Array.isArray(params.role_owners) || params.role_owners.length === 0) {
+      throw new Error("role_owners 不能为空");
+    }
+
+    return this.request({
+      method: "PUT",
+      path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}`,
+      body: {
+        update_fields: [
+          {
+            field_key: "role_owners",
+            field_value: params.role_owners,
+          },
+        ],
+      },
+    });
+  }
 }
