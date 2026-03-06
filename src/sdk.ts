@@ -9,7 +9,7 @@ type TokenCacheEntry = {
   expiresAt: number;
 };
 
-function parseWorkitemUrl(input?: string) {
+function parseWorkItemUrl(input?: string) {
   if (!input) return {} as Record<string, string | undefined>;
   const m = input.match(
     /project\.feishu\.cn\/([^/]+)\/([^/]+)(?:\/detail\/([^/?#]+))?/,
@@ -22,6 +22,15 @@ function parseWorkitemUrl(input?: string) {
 }
 
 const BASE_URL = "https://project.feishu.cn";
+
+/**
+ * 飞书项目 API 返回的 ID 超过 Number.MAX_SAFE_INTEGER，
+ * 直接 JSON.parse 会丢失精度，先将大整数转为字符串再解析。
+ */
+function safeParse(text: string): any {
+  const safe = text.replace(/:\s*(\d{16,})\b/g, ': "$1"');
+  return JSON.parse(safe);
+}
 
 export class LarkProject {
   private readonly pluginId: string;
@@ -51,14 +60,24 @@ export class LarkProject {
       }),
     });
 
+    const text = await res.text();
+
     if (!res.ok) {
-      throw new Error(`get plugin_access_token failed: HTTP ${res.status}`);
+      throw new Error(
+        `get plugin_access_token failed: HTTP ${res.status}; body=${text.slice(0, 500)}`,
+      );
     }
 
-    const data = (await res.json()) as any;
-    const token = data?.data?.plugin_access_token || data?.plugin_access_token;
+    const data = safeParse(text);
+    const token =
+      data?.data?.token ||
+      data?.data?.plugin_access_token ||
+      data?.plugin_access_token;
     const expire = Number(data?.data?.expire_time || data?.expire_time || 7200);
-    if (!token) throw new Error("plugin_access_token missing in response");
+    if (!token)
+      throw new Error(
+        `plugin_access_token missing in response: ${JSON.stringify(data).slice(0, 500)}`,
+      );
 
     this.pluginToken = { token, expiresAt: Date.now() + expire * 1000 };
     return token;
@@ -100,7 +119,7 @@ export class LarkProject {
     const text = await res.text();
     let json: any = null;
     try {
-      json = text ? JSON.parse(text) : null;
+      json = text ? safeParse(text) : null;
     } catch {}
 
     if (!res.ok) {
@@ -119,18 +138,16 @@ export class LarkProject {
     return json ?? { raw: text };
   }
 
-  // ── Public API ────────────────────────────────────────────
+  // ── Helpers ──────────────────────────────────────────────
 
-  async updateWorkitemDescription(params: {
+  private resolveWorkItem(params: {
     url?: string;
     project_key?: string;
     work_item_type?: string;
     work_item_type_key?: string;
     work_item_id?: string;
-    description: string;
-    field_key?: string;
   }) {
-    const parsed = parseWorkitemUrl(params.url);
+    const parsed = parseWorkItemUrl(params.url);
     const projectKey = params.project_key || parsed.project_key;
     const workItemTypeKey =
       params.work_item_type ||
@@ -146,6 +163,23 @@ export class LarkProject {
       );
     if (!workItemId)
       throw new Error("缺少 work_item_id（可通过参数或 url 提供）");
+
+    return { projectKey, workItemTypeKey, workItemId };
+  }
+
+  // ── Public API ────────────────────────────────────────────
+
+  async updateWorkItemDescription(params: {
+    url?: string;
+    project_key?: string;
+    work_item_type?: string;
+    work_item_type_key?: string;
+    work_item_id?: string;
+    description: string;
+    field_key?: string;
+  }) {
+    const { projectKey, workItemTypeKey, workItemId } =
+      this.resolveWorkItem(params);
 
     if (typeof params.description !== "string" || !params.description.trim()) {
       throw new Error("description 不能为空");
@@ -164,6 +198,65 @@ export class LarkProject {
           },
         ],
       },
+    });
+  }
+
+  async createWorkItemComment(params: {
+    url?: string;
+    project_key?: string;
+    work_item_type?: string;
+    work_item_type_key?: string;
+    work_item_id?: string;
+    content: string;
+  }) {
+    const { projectKey, workItemTypeKey, workItemId } =
+      this.resolveWorkItem(params);
+
+    if (typeof params.content !== "string" || !params.content.trim()) {
+      throw new Error("content 不能为空");
+    }
+
+    return this.request({
+      method: "POST",
+      path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/comment/create`,
+      body: { content: params.content },
+    });
+  }
+
+  async listWorkItemComments(params: {
+    url?: string;
+    project_key?: string;
+    work_item_type?: string;
+    work_item_type_key?: string;
+    work_item_id?: string;
+  }) {
+    const { projectKey, workItemTypeKey, workItemId } =
+      this.resolveWorkItem(params);
+
+    return this.request({
+      method: "GET",
+      path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/comments`,
+    });
+  }
+
+  async deleteWorkItemComment(params: {
+    url?: string;
+    project_key?: string;
+    work_item_type?: string;
+    work_item_type_key?: string;
+    work_item_id?: string;
+    comment_id: string;
+  }) {
+    const { projectKey, workItemTypeKey, workItemId } =
+      this.resolveWorkItem(params);
+
+    if (!params.comment_id) {
+      throw new Error("缺少 comment_id");
+    }
+
+    return this.request({
+      method: "DELETE",
+      path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/comment/${params.comment_id}`,
     });
   }
 }

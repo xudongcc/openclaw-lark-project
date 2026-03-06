@@ -18,7 +18,7 @@ openclaw plugins install openclaw-lark-project
 
 ## 工具
 
-### `update_workitem_description`
+### `update_work_item_description`
 
 更新工作项描述字段（用于补充 MCP `update_field` 在描述字段上的限制）。
 
@@ -41,6 +41,41 @@ openclaw plugins install openclaw-lark-project
   "description": "## 更新说明\n\n通过插件工具更新描述字段。"
 }
 ```
+
+### `create_work_item_comment`
+
+在指定工作项下添加一条评论。
+
+| 参数             | 必填 | 说明                           |
+| ---------------- | ---- | ------------------------------ |
+| `content`        | ✅   | 评论内容（纯文本）             |
+| `url`            |      | 工作项详情页 URL（可自动解析） |
+| `project_key`    |      | 项目标识                       |
+| `work_item_type` |      | 工作项类型                     |
+| `work_item_id`   |      | 工作项 ID                      |
+
+### `list_work_item_comments`
+
+获取指定工作项下的所有评论列表。
+
+| 参数             | 必填 | 说明                           |
+| ---------------- | ---- | ------------------------------ |
+| `url`            |      | 工作项详情页 URL（可自动解析） |
+| `project_key`    |      | 项目标识                       |
+| `work_item_type` |      | 工作项类型                     |
+| `work_item_id`   |      | 工作项 ID                      |
+
+### `delete_work_item_comment`
+
+删除指定工作项下的一条评论（仅评论创建人可删除）。
+
+| 参数             | 必填 | 说明                                             |
+| ---------------- | ---- | ------------------------------------------------ |
+| `comment_id`     | ✅   | 评论 ID（可通过 `list_work_item_comments` 获取） |
+| `url`            |      | 工作项详情页 URL（可自动解析）                   |
+| `project_key`    |      | 项目标识                                         |
+| `work_item_type` |      | 工作项类型                                       |
+| `work_item_id`   |      | 工作项 ID                                        |
 
 ## 开发
 

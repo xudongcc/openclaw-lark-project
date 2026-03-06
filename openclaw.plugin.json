@@ -1,9 +1,8 @@
 {
   "id": "openclaw-lark-project",
   "name": "Lark Project",
-  "version": "0.1.0",
-  "description": "Manage Feishu Project work items via configurable credentials.",
   "entry": "./src/index.ts",
+  "skills": ["./skills"],
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
@@ -29,7 +28,7 @@
   "uiHints": {
     "pluginId": {
       "label": "Plugin ID",
-      "placeholder": "例如: cli_xxx"
+      "placeholder": "例如: MII_*"
     },
     "pluginSecret": {
       "label": "Plugin Secret",
