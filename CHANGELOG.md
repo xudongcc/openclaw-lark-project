@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.0.0...v1.1.0) (2026-03-06)
+
+
+### Features
+
+* add work item comment tools (create, list, delete) ([627a963](https://github.com/xudongcc/openclaw-lark-project/commit/627a963fdf6b177293385b7e062fd93315a84bc3))
+
 # 1.0.0 (2026-03-05)
 
 
