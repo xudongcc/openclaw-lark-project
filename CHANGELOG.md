@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.3.0...v1.4.0) (2026-03-06)
+
+
+### Features
+
+* Add `updateWorkItemRoleOwners` functionality with a test for empty role owners and update gitignore. ([ff639d8](https://github.com/xudongcc/openclaw-lark-project/commit/ff639d8ad3370e2c7f9aeeaabefd2a71119f6264))
+
 # [1.3.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.2.1...v1.3.0) (2026-03-06)
 
 
