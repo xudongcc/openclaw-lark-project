@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.5.0...v1.6.0) (2026-03-06)
+
+
+### Features
+
+* relocate SDK and its tests to a dedicated `src/sdk` directory and introduce type definitions. ([386e9a7](https://github.com/xudongcc/openclaw-lark-project/commit/386e9a7441e0e1448315c08d9b87fc49aee0403a))
+
 # [1.5.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.4.0...v1.5.0) (2026-03-06)
 
 
