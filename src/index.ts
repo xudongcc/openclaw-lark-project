@@ -1,215 +1,163 @@
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import { z } from "zod/v4";
 import { LarkProject } from "./sdk";
 
-type PluginConfig = {
-  pluginId: string;
-  pluginSecret: string;
-  userKey: string;
+/**
+ * 工作项定位参数，所有 action 共用。
+ * 支持通过 `url` 自动解析或显式传入 `project_key` / `work_item_type` / `work_item_id`。
+ */
+const WorkItemLocator = {
+  url: z
+    .string()
+    .describe(
+      "工作项详情页 URL，例如 https://project.feishu.cn/<project_key>/<type>/detail/<id>",
+    )
+    .optional(),
+  project_key: z.string().optional(),
+  work_item_type: z.string().describe("如 story / issue / bug").optional(),
+  work_item_type_key: z.string().describe("work_item_type 的别名").optional(),
+  work_item_id: z.string().optional(),
 };
 
-function wrapResult(result: any) {
-  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-}
+/**
+ * `lark_project` 工具的统一参数 Schema。
+ *
+ * @remarks
+ * 使用 `z.discriminatedUnion("action", ...)` 按 action 字段分发，
+ * 通过 `z.toJSONSchema()` 转换后传给 `api.registerTool`。
+ */
+const LarkProjectToolSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("update_work_item_description"),
+    ...WorkItemLocator,
+    description: z.string().describe("要写入的描述内容（支持 markdown）"),
+    field_key: z.string().describe("描述字段 key，默认 description").optional(),
+  }),
+  z.object({
+    action: z.literal("create_work_item_comment"),
+    ...WorkItemLocator,
+    content: z.string().describe("评论内容（纯文本）"),
+  }),
+  z.object({
+    action: z.literal("list_work_item_comments"),
+    ...WorkItemLocator,
+  }),
+  z.object({
+    action: z.literal("delete_work_item_comment"),
+    ...WorkItemLocator,
+    comment_id: z.string().describe("要删除的评论 ID"),
+  }),
+]);
 
-function wrapError(tool: string, err: any) {
-  return {
-    content: [
-      { type: "text", text: `${tool} 失败: ${err?.message || String(err)}` },
-    ],
-    isError: true,
-  };
-}
+/** 插件配置 Zod Schema。 */
+const LarkProjectConfigSchema = z.object({
+  pluginId: z.string().default(""),
+  pluginSecret: z.string().default(""),
+  userKey: z.string().default(""),
+});
 
-export default function register(api: any) {
-  // api.config 可能是完整的 openclaw 配置对象，插件自身的 config 在
-  // api.config.plugins.entries["openclaw-lark-project"].config 下面；
-  // 也可能直接就是插件的 config（取决于 openclaw 版本/调用方式）。
-  const raw = api?.config || {};
-  const pluginEntry = raw?.plugins?.entries?.["openclaw-lark-project"]?.config;
-  const cfg = (pluginEntry || raw) as PluginConfig;
+/**
+ * 插件配置 Schema，符合 {@link OpenClawPluginConfigSchema} 接口。
+ *
+ * @remarks
+ * - `parse` 使用 `LarkProjectConfigSchema` 验证并规范化配置
+ * - `uiHints` 提供 UI 渲染提示（标签、占位符、敏感标记）
+ */
+const configSchema = {
+  parse(value: unknown): z.infer<typeof LarkProjectConfigSchema> {
+    return LarkProjectConfigSchema.parse(value ?? {});
+  },
+  uiHints: {
+    pluginId: { label: "Plugin ID", placeholder: "例如: MII_*" },
+    pluginSecret: {
+      label: "Plugin Secret",
+      placeholder: "输入插件密钥",
+      sensitive: true,
+    },
+    userKey: {
+      label: "User Key",
+      placeholder: "例如: ou_xxx 或 user_xxx",
+    },
+  },
+};
 
-  const client = new LarkProject({
-    pluginId: cfg.pluginId,
-    pluginSecret: cfg.pluginSecret,
-    userKey: cfg.userKey,
-  });
+/**
+ * OpenClaw 插件定义（对象式导出）。
+ *
+ * @remarks
+ * 参照 openclaw 官方插件模式：
+ * - 通过 `api.pluginConfig` 读取插件专属配置
+ * - `configSchema.parse()` 进行配置验证与默认值填充
+ * - 注册单一 `lark_project` 工具，通过 `action` 字段分发四种操作
+ */
+const larkProjectPlugin = {
+  id: "openclaw-lark-project",
+  name: "Lark Project",
+  description:
+    "飞书项目工作项描述更新与评论管理，补充 MCP update_field 在描述字段上的限制。",
+  configSchema,
 
-  api?.logger?.info?.("[lark-project] plugin loaded", {
-    hasPluginId: Boolean(cfg.pluginId),
-    hasPluginSecret: Boolean(cfg.pluginSecret),
-    hasUserKey: Boolean(cfg.userKey),
-  });
+  /**
+   * 插件注册入口，由 openclaw 运行时调用。
+   *
+   * @param api - openclaw 插件 API
+   */
+  register(api: OpenClawPluginApi) {
+    const config = configSchema.parse(api.pluginConfig);
 
-  api.registerTool(
-    {
-      name: "update_work_item_description",
-      description:
-        "更新工作项描述字段（用于补充 MCP update_field 在描述字段上的限制）。支持通过 url 自动解析 project_key/work_item_type/work_item_id。",
-      parameters: {
-        type: "object",
-        required: ["description"],
-        properties: {
-          url: {
-            type: "string",
-            description:
-              "工作项详情页 URL，例如 https://project.feishu.cn/<project_key>/<work_item_type>/detail/<work_item_id>",
-          },
-          project_key: { type: "string" },
-          work_item_type: {
-            type: "string",
-            description: "如 story / issue / bug",
-          },
-          work_item_type_key: {
-            type: "string",
-            description: "work_item_type 的别名",
-          },
-          work_item_id: { type: "string" },
-          description: {
-            type: "string",
-            description: "要写入的描述内容（支持 markdown 文本）",
-          },
-          field_key: {
-            type: "string",
-            description:
-              "默认 description。仅在你的空间使用自定义描述字段 key 时传入。",
-          },
+    const client = new LarkProject({
+      pluginId: config.pluginId,
+      pluginSecret: config.pluginSecret,
+      userKey: config.userKey,
+    });
+
+    /** 将任意 payload 包装为工具返回的文本内容格式。 */
+    const json = (payload: unknown) => ({
+      content: [
+        { type: "text" as const, text: JSON.stringify(payload, null, 2) },
+      ],
+      details: payload,
+    });
+
+    api.registerTool(
+      {
+        name: "lark_project",
+        label: "Lark Project",
+        description:
+          "管理飞书项目工作项：更新描述、添加/查询/删除评论。通过 action 字段选择操作。",
+        parameters: z.toJSONSchema(LarkProjectToolSchema),
+
+        async execute(
+          _toolCallId: string,
+          params: z.infer<typeof LarkProjectToolSchema>,
+        ) {
+          try {
+            switch (params.action) {
+              case "update_work_item_description":
+                return json(await client.updateWorkItemDescription(params));
+
+              case "create_work_item_comment":
+                return json(await client.createWorkItemComment(params));
+
+              case "list_work_item_comments":
+                return json(await client.listWorkItemComments(params));
+
+              case "delete_work_item_comment":
+                return json(await client.deleteWorkItemComment(params));
+
+              default:
+                return json({
+                  error: `未知的工具调用`,
+                });
+            }
+          } catch (err: any) {
+            return json({ error: err?.message || String(err) });
+          }
         },
       },
-      async execute(_id: string, params: any) {
-        try {
-          const result = await client.updateWorkItemDescription(params);
-          return wrapResult(result);
-        } catch (err: any) {
-          return wrapError("update_work_item_description", err);
-        }
-      },
-    },
-    { optional: true },
-  );
+      { optional: true },
+    );
+  },
+};
 
-  // ── create_work_item_comment ─────────────────────────────
-
-  api.registerTool(
-    {
-      name: "create_work_item_comment",
-      description:
-        "在指定工作项下添加一条评论。支持通过 url 自动解析 project_key/work_item_type/work_item_id。",
-      parameters: {
-        type: "object",
-        required: ["content"],
-        properties: {
-          url: {
-            type: "string",
-            description:
-              "工作项详情页 URL，例如 https://project.feishu.cn/<project_key>/<work_item_type>/detail/<work_item_id>",
-          },
-          project_key: { type: "string" },
-          work_item_type: {
-            type: "string",
-            description: "如 story / issue / bug",
-          },
-          work_item_type_key: {
-            type: "string",
-            description: "work_item_type 的别名",
-          },
-          work_item_id: { type: "string" },
-          content: {
-            type: "string",
-            description: "评论内容（纯文本）",
-          },
-        },
-      },
-      async execute(_id: string, params: any) {
-        try {
-          const result = await client.createWorkItemComment(params);
-          return wrapResult(result);
-        } catch (err: any) {
-          return wrapError("create_work_item_comment", err);
-        }
-      },
-    },
-    { optional: true },
-  );
-
-  // ── list_work_item_comments ──────────────────────────────
-
-  api.registerTool(
-    {
-      name: "list_work_item_comments",
-      description:
-        "获取指定工作项下的所有评论列表。支持通过 url 自动解析 project_key/work_item_type/work_item_id。",
-      parameters: {
-        type: "object",
-        properties: {
-          url: {
-            type: "string",
-            description:
-              "工作项详情页 URL，例如 https://project.feishu.cn/<project_key>/<work_item_type>/detail/<work_item_id>",
-          },
-          project_key: { type: "string" },
-          work_item_type: {
-            type: "string",
-            description: "如 story / issue / bug",
-          },
-          work_item_type_key: {
-            type: "string",
-            description: "work_item_type 的别名",
-          },
-          work_item_id: { type: "string" },
-        },
-      },
-      async execute(_id: string, params: any) {
-        try {
-          const result = await client.listWorkItemComments(params);
-          return wrapResult(result);
-        } catch (err: any) {
-          return wrapError("list_work_item_comments", err);
-        }
-      },
-    },
-    { optional: true },
-  );
-
-  // ── delete_work_item_comment ─────────────────────────────
-
-  api.registerTool(
-    {
-      name: "delete_work_item_comment",
-      description:
-        "删除指定工作项下的一条评论。仅评论创建人可删除。支持通过 url 自动解析 project_key/work_item_type/work_item_id。",
-      parameters: {
-        type: "object",
-        required: ["comment_id"],
-        properties: {
-          url: {
-            type: "string",
-            description:
-              "工作项详情页 URL，例如 https://project.feishu.cn/<project_key>/<work_item_type>/detail/<work_item_id>",
-          },
-          project_key: { type: "string" },
-          work_item_type: {
-            type: "string",
-            description: "如 story / issue / bug",
-          },
-          work_item_type_key: {
-            type: "string",
-            description: "work_item_type 的别名",
-          },
-          work_item_id: { type: "string" },
-          comment_id: {
-            type: "string",
-            description: "要删除的评论 ID，可通过 list_work_item_comments 获取",
-          },
-        },
-      },
-      async execute(_id: string, params: any) {
-        try {
-          const result = await client.deleteWorkItemComment(params);
-          return wrapResult(result);
-        } catch (err: any) {
-          return wrapError("delete_work_item_comment", err);
-        }
-      },
-    },
-    { optional: true },
-  );
-}
+export default larkProjectPlugin;

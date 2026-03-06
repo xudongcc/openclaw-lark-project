@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { LarkProject } from "./sdk";
 
-const PLUGIN_ID = process.env.LARK_PLUGIN_ID!;
-const PLUGIN_SECRET = process.env.LARK_PLUGIN_SECRET!;
-const PROJECT_KEY = process.env.LARK_PROJECT_KEY!;
-const USER_KEY = process.env.LARK_USER_KEY!;
+const PLUGIN_ID = process.env.LARK_PROJECT_PLUGIN_ID!;
+const PLUGIN_SECRET = process.env.LARK_PROJECT_PLUGIN_SECRET!;
+const PROJECT_KEY = process.env.LARK_PROJECT_PROJECT_KEY!;
+const USER_KEY = process.env.LARK_PROJECT_USER_KEY!;
 
 const skip = !PLUGIN_ID || !PLUGIN_SECRET || !PROJECT_KEY || !USER_KEY;
 

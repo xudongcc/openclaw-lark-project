@@ -3,6 +3,7 @@
   "version": "1.2.1",
   "description": "OpenClaw plugin for Lark Project workitem description updates",
   "type": "module",
+  "license": "MIT",
   "openclaw": {
     "extensions": [
       "./src/index.ts"
@@ -18,15 +19,18 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^12.0.6",
     "@semantic-release/npm": "^13.1.5",
     "@types/node": "^25.3.5",
+    "openclaw": "^2026.3.2",
     "semantic-release": "^25.0.3",
     "typescript": "^5.7.0",
     "vitest": "^4.0.0"
-  },
-  "license": "MIT"
+  }
 }

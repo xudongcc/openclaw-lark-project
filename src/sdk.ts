@@ -1,14 +1,29 @@
+/**
+ * Options for initializing a {@link LarkProject} client.
+ */
 export type LarkProjectOptions = {
+  /** 飞书项目插件 ID，格式如 `MII_*` */
   pluginId: string;
+  /** 飞书项目插件密钥 */
   pluginSecret: string;
+  /** 用户标识，格式如 `ou_*` 或 `user_*` */
   userKey: string;
 };
 
+/** @internal */
 type TokenCacheEntry = {
   token: string;
   expiresAt: number;
 };
 
+/**
+ * 从飞书项目工作项详情页 URL 中解析 `project_key`、`work_item_type`、`work_item_id`。
+ *
+ * @param input - 工作项详情页完整 URL
+ * @returns 解析出的各字段，未匹配到时值为 `undefined`
+ *
+ * @internal
+ */
 function parseWorkItemUrl(input?: string) {
   if (!input) return {} as Record<string, string | undefined>;
   const m = input.match(
@@ -21,17 +36,45 @@ function parseWorkItemUrl(input?: string) {
   };
 }
 
+/** @internal */
 const BASE_URL = "https://project.feishu.cn";
 
 /**
- * 飞书项目 API 返回的 ID 超过 Number.MAX_SAFE_INTEGER，
- * 直接 JSON.parse 会丢失精度，先将大整数转为字符串再解析。
+ * 飞书项目 API 返回的 ID 超过 `Number.MAX_SAFE_INTEGER`，
+ * 直接 `JSON.parse` 会丢失精度。此函数先将 16 位及以上的纯数字值
+ * 转为字符串再解析。
+ *
+ * @param text - 原始 JSON 字符串
+ * @returns 解析后的对象（大整数已转为字符串）
+ *
+ * @internal
  */
 function safeParse(text: string): any {
   const safe = text.replace(/:\s*(\d{16,})\b/g, ': "$1"');
   return JSON.parse(safe);
 }
 
+/**
+ * 飞书项目 OpenAPI 客户端。
+ *
+ * @remarks
+ * 封装了 plugin_access_token 鉴权、请求发送和大整数精度修复，
+ * 提供工作项描述更新和评论管理能力。
+ *
+ * @example
+ * ```ts
+ * const client = new LarkProject({
+ *   pluginId: "MII_xxx",
+ *   pluginSecret: "xxx",
+ *   userKey: "ou_xxx",
+ * });
+ *
+ * await client.createWorkItemComment({
+ *   url: "https://project.feishu.cn/proj/story/detail/123",
+ *   content: "这是一条评论",
+ * });
+ * ```
+ */
 export class LarkProject {
   private readonly pluginId: string;
   private readonly pluginSecret: string;
@@ -44,8 +87,18 @@ export class LarkProject {
     this.userKey = options.userKey;
   }
 
-  // ── Token management ──────────────────────────────────────
-
+  /**
+   * 获取或刷新 plugin_access_token。
+   *
+   * @remarks
+   * 在 token 过期前 30 秒自动刷新，支持 `data.token` 和
+   * `data.plugin_access_token` 两种响应格式。
+   *
+   * @returns plugin_access_token 字符串
+   * @throws 当 HTTP 请求失败或响应中缺少 token 时抛出异常
+   *
+   * @internal
+   */
   private async getPluginAccessToken(): Promise<string> {
     if (this.pluginToken && this.pluginToken.expiresAt > Date.now() + 30_000) {
       return this.pluginToken.token;
@@ -83,8 +136,15 @@ export class LarkProject {
     return token;
   }
 
-  // ── HTTP helper ───────────────────────────────────────────
-
+  /**
+   * 向飞书项目 OpenAPI 发送已鉴权的 HTTP 请求。
+   *
+   * @param options - 请求配置
+   * @returns 解析后的 JSON 响应体
+   * @throws HTTP 错误或业务错误码非零时抛出异常
+   *
+   * @internal
+   */
   private async request(options: {
     method: "GET" | "POST" | "PUT" | "DELETE";
     path: string;
@@ -138,8 +198,18 @@ export class LarkProject {
     return json ?? { raw: text };
   }
 
-  // ── Helpers ──────────────────────────────────────────────
-
+  /**
+   * 从参数中解析工作项三元组（project_key、work_item_type、work_item_id）。
+   *
+   * @remarks
+   * 支持从 `url` 自动解析，也支持显式传入各字段，显式字段优先级更高。
+   *
+   * @param params - 包含 url 或显式字段的参数对象
+   * @returns 解析后的 `projectKey`、`workItemTypeKey`、`workItemId`
+   * @throws 缺少必要字段时抛出异常
+   *
+   * @internal
+   */
   private resolveWorkItem(params: {
     url?: string;
     project_key?: string;
@@ -167,8 +237,18 @@ export class LarkProject {
     return { projectKey, workItemTypeKey, workItemId };
   }
 
-  // ── Public API ────────────────────────────────────────────
-
+  /**
+   * 更新工作项描述字段。
+   *
+   * @remarks
+   * 用于补充 MCP `update_field` 在描述字段上的限制。
+   *
+   * @param params - 工作项定位参数 + 描述内容
+   * @param params.description - 描述内容（支持 markdown）
+   * @param params.field_key - 描述字段 key，默认 `"description"`
+   * @returns API 响应体
+   * @throws 当 `description` 为空时抛出异常
+   */
   async updateWorkItemDescription(params: {
     url?: string;
     project_key?: string;
@@ -201,6 +281,14 @@ export class LarkProject {
     });
   }
 
+  /**
+   * 在工作项下添加一条纯文本评论。
+   *
+   * @param params - 工作项定位参数 + 评论内容
+   * @param params.content - 评论内容（纯文本）
+   * @returns API 响应体，`data` 字段为新评论 ID
+   * @throws 当 `content` 为空时抛出异常
+   */
   async createWorkItemComment(params: {
     url?: string;
     project_key?: string;
@@ -223,6 +311,12 @@ export class LarkProject {
     });
   }
 
+  /**
+   * 获取工作项下的所有评论列表。
+   *
+   * @param params - 工作项定位参数
+   * @returns API 响应体，`data` 字段为评论数组
+   */
   async listWorkItemComments(params: {
     url?: string;
     project_key?: string;
@@ -239,6 +333,17 @@ export class LarkProject {
     });
   }
 
+  /**
+   * 删除工作项下的一条评论。
+   *
+   * @remarks
+   * 仅评论的原始创建人可执行删除操作。
+   *
+   * @param params - 工作项定位参数 + 评论 ID
+   * @param params.comment_id - 要删除的评论 ID（可通过 {@link listWorkItemComments} 获取）
+   * @returns API 响应体
+   * @throws 当 `comment_id` 为空时抛出异常
+   */
   async deleteWorkItemComment(params: {
     url?: string;
     project_key?: string;
