@@ -1,3 +1,4 @@
+import JSONBigInt from "json-bigint";
 import type {
   LarkProjectOptions,
   WorkItemLocator,
@@ -28,6 +29,8 @@ import type {
   LarkProjectResponse,
 } from "./types";
 
+const JSON = JSONBigInt({ storeAsString: true });
+
 /** @internal */
 type TokenCacheEntry = {
   token: string;
@@ -56,21 +59,6 @@ function parseWorkItemUrl(input?: string) {
 
 /** @internal */
 const BASE_URL = "https://project.feishu.cn";
-
-/**
- * 飞书项目 API 返回的 ID 超过 `Number.MAX_SAFE_INTEGER`，
- * 直接 `JSON.parse` 会丢失精度。此函数先将 16 位及以上的纯数字值
- * 转为字符串再解析。
- *
- * @param text - 原始 JSON 字符串
- * @returns 解析后的对象（大整数已转为字符串）
- *
- * @internal
- */
-function safeParse(text: string): any {
-  const safe = text.replace(/:\s*(\d{16,})\b/g, ': "$1"');
-  return JSON.parse(safe);
-}
 
 /**
  * 飞书项目 OpenAPI 客户端。
@@ -139,7 +127,7 @@ export class LarkProject {
       );
     }
 
-    const data = safeParse(text);
+    const data = JSON.parse(text);
     const token =
       data?.data?.token ||
       data?.data?.plugin_access_token ||
@@ -197,7 +185,7 @@ export class LarkProject {
     const text = await res.text();
     let json: any = null;
     try {
-      json = text ? safeParse(text) : null;
+      json = text ? JSON.parse(text) : null;
     } catch {}
 
     if (!res.ok) {
