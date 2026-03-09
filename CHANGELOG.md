@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.6.1...v1.7.0) (2026-03-09)
+
+
+### Features
+
+* 集成 MCP Client SDK 并重构其核心 Client 模块 ([a0cafc4](https://github.com/xudongcc/openclaw-lark-project/commit/a0cafc4155dcb532a1070ab0f1f1ffe04e8e1b68))
+
 ## [1.6.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.6.0...v1.6.1) (2026-03-09)
 
 
