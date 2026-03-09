@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.6.0...v1.6.1) (2026-03-09)
+
+
+### Bug Fixes
+
+* 使用 json-bigint 修复大整数 ID 精度丢失问题 ([14dade1](https://github.com/xudongcc/openclaw-lark-project/commit/14dade14854ae9da34a8d573c31af8309024350f))
+
 # [1.6.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.5.0...v1.6.0) (2026-03-06)
 
 
