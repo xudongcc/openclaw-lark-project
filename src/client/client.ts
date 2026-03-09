@@ -1,6 +1,6 @@
 import JSONBigInt from "json-bigint";
 import type {
-  LarkProjectOptions,
+  LarkProjectClientOptions,
   WorkItemLocator,
   CreateWorkItemCommentParams,
   ListWorkItemCommentsParams,
@@ -14,6 +14,11 @@ import type {
   ChangeStateParams,
   CreateWorkItemParams,
   AbortWorkItemParams,
+  GetWorkItemParams,
+  GetViewDetailParams,
+  GetWorkItemSchemaParams,
+  ViewDetail,
+  WorkItem,
   CreateWorkItemCommentResult,
   ListWorkItemCommentsResult,
   DeleteWorkItemCommentResult,
@@ -26,6 +31,9 @@ import type {
   ChangeStateResult,
   CreateWorkItemResult,
   AbortWorkItemResult,
+  GetWorkItemResult,
+  GetViewDetailResult,
+  GetWorkItemSchemaResult,
   LarkProjectResponse,
 } from "./types";
 
@@ -69,10 +77,10 @@ const BASE_URL = "https://project.feishu.cn";
  *
  * @example
  * ```ts
- * const client = new LarkProject({
+ * const client = new LarkProjectClient({
  *   pluginId: "MII_xxx",
  *   pluginSecret: "xxx",
- *   userKey: "ou_xxx",
+ *   userKey: "7136000000000000676",
  * });
  *
  * await client.createWorkItemComment({
@@ -81,13 +89,13 @@ const BASE_URL = "https://project.feishu.cn";
  * });
  * ```
  */
-export class LarkProject {
+export class LarkProjectClient {
   private readonly pluginId: string;
   private readonly pluginSecret: string;
   private readonly userKey: string;
   private pluginToken?: TokenCacheEntry;
 
-  constructor(options: LarkProjectOptions) {
+  constructor(options: LarkProjectClientOptions) {
     this.pluginId = options.pluginId;
     this.pluginSecret = options.pluginSecret;
     this.userKey = options.userKey;
@@ -628,5 +636,166 @@ export class LarkProject {
         reason_option: "other",
       },
     });
+  }
+
+  /**
+   * 获取单个工作项的完整详情。
+   *
+   * @param params - 查询参数
+   * @param params.project_key - 空间标识
+   * @param params.work_item_id - 工作项 ID
+   * @param params.work_item_type_key - 工作项类型（可选，不传自动推断）
+   * @returns API 响应体，data 为工作项完整详情
+   */
+  async getWorkItem(params: GetWorkItemParams): Promise<GetWorkItemResult> {
+    if (!params.project_key) {
+      throw new Error("缺少 project_key");
+    }
+    if (!params.work_item_id) {
+      throw new Error("缺少 work_item_id");
+    }
+
+    const typeKeys = params.work_item_type_key
+      ? [params.work_item_type_key]
+      : ["story", "issue", "bug", "ticket", "epic"];
+
+    const filterRes = await this.request<WorkItem[]>({
+      method: "POST",
+      path: `/open_api/${params.project_key}/work_item/filter`,
+      body: {
+        work_item_type_keys: typeKeys,
+        work_item_ids: [Number(params.work_item_id)],
+        page_size: 1,
+      },
+    });
+
+    const item = filterRes.data?.[0];
+    if (!item) {
+      throw new Error(`工作项 ${params.work_item_id} 不存在`);
+    }
+
+    return {
+      ...filterRes,
+      data: item,
+    } as GetWorkItemResult;
+  }
+
+  /**
+   * 获取视图下的工作项列表。
+   *
+   * @remarks
+   * 第一步：通过 fix_view API 获取视图元数据和工作项 ID 列表。
+   * 第二步：如果视图包含工作项，通过 filter API 批量获取工作项完整详情。
+   *
+   * @param params - 视图查询参数
+   * @param params.project_key - 空间标识
+   * @param params.view_id - 视图 ID（从视图 URL 末尾获取）
+   * @param params.page_num - 页码（从 1 开始，默认 1）
+   * @param params.page_size - 每页条数（最大 200）
+   * @returns API 响应体，data 包含视图信息、work_item_id_list 和 work_items（工作项详情数组）
+   */
+  async getViewDetail(
+    params: GetViewDetailParams,
+  ): Promise<GetViewDetailResult> {
+    if (!params.project_key) {
+      throw new Error("缺少 project_key");
+    }
+    if (!params.view_id) {
+      throw new Error("缺少 view_id");
+    }
+
+    // Step 1: 获取视图元数据和工作项 ID 列表
+    const viewRes = await this.request<ViewDetail>({
+      method: "GET",
+      path: `/open_api/${params.project_key}/fix_view/${params.view_id}`,
+      query: {
+        page_num: params.page_num,
+        page_size: params.page_size,
+      },
+    });
+
+    const result = viewRes as GetViewDetailResult;
+
+    // Step 2: 通过 filter API 查询工作项完整详情
+    const ids = result.data?.work_item_id_list;
+    if (ids && ids.length > 0) {
+      const typeKeys = ["story", "issue", "bug", "ticket", "epic"];
+
+      const allItems: WorkItem[] = [];
+      for (let i = 0; i < ids.length; i += 200) {
+        const batch = ids.slice(i, i + 200).map(Number);
+        const filterRes = await this.request<WorkItem[]>({
+          method: "POST",
+          path: `/open_api/${params.project_key}/work_item/filter`,
+          body: {
+            work_item_type_keys: typeKeys,
+            work_item_ids: batch,
+            page_size: batch.length,
+          },
+        });
+        if (filterRes.data) {
+          allItems.push(...filterRes.data);
+        }
+      }
+      result.data.work_items = allItems;
+    }
+
+    return result;
+  }
+
+  /**
+   * 获取工作项类型的字段定义和角色信息。
+   *
+   * @remarks
+   * 组合调用 `field/all` 和 `flow_roles` 两个 OpenAPI 接口，
+   * 返回指定工作项类型的字段定义列表和角色列表。
+   *
+   * @param params - 查询参数
+   * @param params.project_key - 空间标识
+   * @param params.work_item_type_key - 工作项类型（如 story / issue）
+   * @returns 包含 fields 和 roles 的响应体
+   */
+  async getWorkItemSchema(
+    params: GetWorkItemSchemaParams,
+  ): Promise<GetWorkItemSchemaResult> {
+    if (!params.project_key) {
+      throw new Error("缺少 project_key");
+    }
+    if (!params.work_item_type_key) {
+      throw new Error("缺少 work_item_type_key");
+    }
+
+    // 并行调用字段定义和角色配置接口
+    const [fieldsRes, rolesRes] = await Promise.all([
+      this.request<any[]>({
+        method: "POST",
+        path: `/open_api/${params.project_key}/field/all`,
+        body: { work_item_type_key: params.work_item_type_key },
+      }),
+      this.request<any[]>({
+        method: "GET",
+        path: `/open_api/${params.project_key}/flow_roles/${params.work_item_type_key}`,
+      }),
+    ]);
+
+    const fields = (fieldsRes.data || []).map((f: any) => ({
+      field_key: f.field_key,
+      field_name: f.field_name,
+      field_type_key: f.field_type_key,
+      is_custom_field: f.is_custom_field ?? false,
+      options: f.options,
+    }));
+
+    const roles = (rolesRes.data || []).map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      is_owner: r.is_owner ?? false,
+    }));
+
+    return {
+      err_code: 0,
+      err_msg: "",
+      data: { fields, roles },
+    };
   }
 }

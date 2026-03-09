@@ -20,6 +20,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "json-bigint": "^1.0.0",
     "zod": "^4.3.6"
   },

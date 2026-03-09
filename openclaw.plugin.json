@@ -6,7 +6,7 @@
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["pluginId", "pluginSecret", "userKey"],
+    "required": ["pluginId", "pluginSecret", "userKey", "mcpKey"],
     "properties": {
       "pluginId": {
         "type": "string",
@@ -17,6 +17,11 @@
         "type": "string",
         "minLength": 1,
         "title": "Plugin Secret"
+      },
+      "mcpKey": {
+        "type": "string",
+        "minLength": 1,
+        "title": "MCP Key"
       },
       "userKey": {
         "type": "string",
@@ -37,7 +42,12 @@
     },
     "userKey": {
       "label": "User Key",
-      "placeholder": "例如: ou_xxx 或 user_xxx"
+      "placeholder": "例如: 7136000000000000676"
+    },
+    "mcpKey": {
+      "label": "MCP Key",
+      "placeholder": "例如: m-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "sensitive": true
     }
   }
 }

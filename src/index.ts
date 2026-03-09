@@ -1,6 +1,7 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { z } from "zod/v4";
-import { LarkProject } from "./sdk/sdk";
+import { LarkProjectClient } from "./client/client";
+import { LarkProjectMCPClient } from "./client/mcp-client";
 
 /**
  * 工作项定位参数，所有 action 共用。
@@ -69,7 +70,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
     action: z
       .literal("update_work_item_role_owners")
       .describe(
-        "覆盖更新工作项的角色人员名单。⚠️ 这是覆盖更新，必须传入所有角色及其人员，未传入的角色人员会被清空。更新前应先通过 MCP get_workitem_brief 获取当前角色列表，角色 ID 可通过 MCP get_workitem_info 查询。",
+        "覆盖更新工作项的角色人员名单。⚠️ 这是覆盖更新，必须传入所有角色及其人员，未传入的角色人员会被清空。更新前应先通过 get_work_item 获取当前角色列表，角色 ID 可通过 get_work_item_schema 查询。",
       ),
     ...WorkItemLocator,
     role_owners: z
@@ -78,15 +79,15 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
           role: z
             .string()
             .describe(
-              '角色 ID（如 "rd"、"pm"、"qa"），可通过 MCP get_workitem_info 获取可用角色列表',
+              '角色 ID（如 "rd"、"pm"、"qa"），可通过 get_work_item_schema 获取可用角色列表',
             ),
           owners: z
             .array(z.string())
-            .describe('该角色的人员 user_key 列表，如 ["ou_xxx", "ou_yyy"]'),
+            .describe('该角色的人员 user_key 列表，如 ["7136000000000000676"]'),
         }),
       )
       .describe(
-        '角色人员数组（覆盖更新）。示例：[{ "role": "rd", "owners": ["ou_xxx"] }]',
+        '角色人员数组（覆盖更新）。示例：[{ "role": "rd", "owners": ["7136000000000000676"] }]',
       ),
   }),
 
@@ -95,7 +96,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
     action: z
       .literal("update_work_item_field")
       .describe(
-        '更新工作项的任意字段（含描述、业务线、优先级等）。适用于 MCP update_field 不支持的字段。字段 key 和格式可通过 MCP get_workitem_info 获取。各类型 field_value 格式：单选（priority 等）→ { "label": "P0", "value": "0" }；业务线（business）→ 业务线 ID 字符串（非名称，通过 list_businesses 获取）；文本 → 字符串；数字 → 数值；人员 → user_key 字符串或数组；日期 → 毫秒时间戳；描述（description）→ markdown 字符串。',
+        '更新工作项的任意字段（含描述、业务线、优先级等）。字段 key 和格式可通过 get_work_item_schema 获取。各类型 field_value 格式：单选（priority 等）→ { "label": "P0", "value": "0" }；业务线（business）→ 业务线 ID 字符串（非名称，通过 list_businesses 获取）；文本 → 字符串；数字 → 数值；人员 → user_key 字符串或数组；日期 → 毫秒时间戳；描述（description）→ markdown 字符串。',
       ),
     ...WorkItemLocator,
     update_fields: z
@@ -104,7 +105,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
           field_key: z
             .string()
             .describe(
-              '字段 key，如 "description"、"priority"、"business"。可通过 MCP get_workitem_info 获取可用字段列表',
+              '字段 key，如 "description"、"priority"、"business"。可通过 get_work_item_schema 获取可用字段列表',
             ),
           field_value: z
             .any()
@@ -154,7 +155,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
     node_owners: z
       .array(z.string())
       .describe(
-        '节点负责人 user_key 列表，建议传入。如 ["ou_xxx"]',
+        '节点负责人 user_key 列表，建议传入。如 ["7136000000000000676"]',
       )
       .optional(),
     node_schedule: z
@@ -192,9 +193,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
       .describe(
         "目标节点 ID（即 workflow_nodes 中的 id/state_key），通过 get_work_item_workflow 获取",
       ),
-    rollback_reason: z
-      .string()
-      .describe("回滚原因说明（必填）"),
+    rollback_reason: z.string().describe("回滚原因说明（必填）"),
   }),
   z.object({
     action: z
@@ -233,7 +232,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
     action: z
       .literal("create_work_item")
       .describe(
-        "在指定空间和工作项类型下创建一个新实例。name 为必填（可通过 name 参数或 field_value_pairs 中 field_key=name 提供）。创建成功后 data 字段返回新工作项 ID。可选传入 field_value_pairs 设置初始字段值、template_id 使用模板。",
+        "创建工作项实例，一次只能创建一条工作项实例，创建成功后，会获得对应的详情页url。",
       ),
     ...WorkItemLocator,
     name: z
@@ -245,8 +244,12 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
     field_value_pairs: z
       .array(
         z.object({
-          field_key: z.string().describe("字段 key"),
-          field_value: z.any().describe("字段值，格式参考 field_value 格式速查"),
+          field_key: z.string().describe("字段key"),
+          field_value: z
+            .any()
+            .describe(
+              "字段值。需注意，时间类的value需要传入16位unix毫秒时间戳，人员类的value需用英文逗号区隔",
+            ),
           field_type_key: z
             .string()
             .describe("字段类型标识（可选，如 select、user 等）")
@@ -254,7 +257,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
         }),
       )
       .describe(
-        '初始字段值列表。示例：[{ "field_key": "priority", "field_value": { "value": "0" } }]',
+        '要创建的实例具体的字段。示例：[{ "field_key": "priority", "field_value": { "value": "0" } }]',
       )
       .optional(),
     template_id: z
@@ -271,13 +274,176 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
     ...WorkItemLocator,
     is_aborted: z
       .boolean()
-      .describe(
-        "true=终止（默认），false=恢复已终止的工作项",
-      )
+      .describe("true=终止（默认），false=恢复已终止的工作项")
       .optional(),
     reason: z
       .string()
       .describe('终止或恢复的原因说明（如 "重复需求" "测试清理"）')
+      .optional(),
+  }),
+
+  // ── 工作项查询 ────────────────────────────────────────────
+  z.object({
+    action: z
+      .literal("get_work_item")
+      .describe(
+        "获取一个工作项实例的概况，包括所有字段、当前节点、状态等信息。",
+      ),
+    project_key: z
+      .string()
+      .describe(
+        '要查询的工作项类型所属的空间projectKey或simpleName，如 "openclaw"',
+      ),
+    work_item_id: z.string().describe("要查询的工作项id或者名称，单值"),
+  }),
+
+  // ── 视图查询 ────────────────────────────────────────────
+  z.object({
+    action: z
+      .literal("get_view_detail")
+      .describe(
+        "获取指定视图下的工作项列表及详情。返回视图名称、工作项 ID 列表和每个工作项的完整详情。",
+      ),
+    project_key: z
+      .string()
+      .describe(
+        '要查询的工作项类型所属的空间projectKey或simpleName，如 "openclaw"',
+      ),
+    view_id: z.string().describe("传入要查询的视图id，单值"),
+    page_num: z.number().describe("分页查询页数起点").optional(),
+    page_size: z.number().describe("每页条数，最大 200").optional(),
+  }),
+
+  // ── 工作项元数据 ────────────────────────────────────────
+  z.object({
+    action: z
+      .literal("get_work_item_schema")
+      .describe(
+        "获取一个工作项类型具备的可用字段与角色信息。返回 fields（字段 key、名称、类型、选项列表）和 roles（角色 ID、名称）。用于在更新字段或角色前了解可用的字段和角色。",
+      ),
+    project_key: z
+      .string()
+      .describe(
+        '要查询的工作项类型所属的空间projectKey或simpleName，如 "openclaw"',
+      ),
+    work_item_type_key: z
+      .string()
+      .describe(
+        "要查询的工作项类型的系统标识或名称，如story、需求、issue、缺陷等",
+      ),
+  }),
+
+  // ── MOQL 查询 ────────────────────────────────────────────
+  z.object({
+    action: z
+      .literal("search_by_mql")
+      .describe(
+        "使用MOQL进行Meego数据的查询。MOQL本身是SQL查询语言的能力扩展。使用该工具要遵循以下步骤：" +
+          "1.理解意图：分析用户的自然语言请求，明确其核心目标，从中提取出空间、工作项类型两个关键信息，如果提取不到，可以追问用户。" +
+          "2.请务必使用步骤1得到的空间key、工作项类型，使用get_work_item_schema来确认要查询的空间以及工作类型，如果查不到信息，请直接报错不要继续。" +
+          "3.按照用户的意图按需查询，select后跟的属性不宜过多。务必使用第二个步骤里获取到的可读性强的名称去写moql，比如可以写select `任务名称`，避免写select `name`。" +
+          "4.按照moql的语法规范来写moql语句。",
+      ),
+    project_key: z
+      .string()
+      .describe("要查询的工作项类型所属的空间projectKey或simpleName或空间名"),
+    session_id: z
+      .string()
+      .describe(
+        "sessionID，传sessionID时不会解析MOQL，直接根据sessionID查询之前的数据。该信息会在exec_moql接口返回体里返回。主要用于分页查询。",
+      )
+      .optional(),
+    group_pagination_list: z
+      .array(
+        z.object({
+          group_id: z
+            .string()
+            .describe("分组ID（从上一次接口返回中获取`group_id`）")
+            .optional(),
+          page_num: z.number().describe("页码，从1开始，每页50条"),
+        }),
+      )
+      .describe(
+        "分页信息。首次查询时可不传（默认返回第一页，最多50条数据）。后续分页可传入该字段+session_id。",
+      )
+      .optional(),
+    moql: z
+      .string()
+      .describe(
+        "要执行的moql语句。\n" +
+          "语法规范如下：\n" +
+          "- 支持现有的Mysql语法。现有的Mysql函数。\n" +
+          "- 提供数组判断方法，通过返回bool类型来表示是否满足条件。包含两个入参：array_col是array类型的列；predicate是lambda_expr类型的表达式，表示判断条件。举例：all_match(ary_col, x -> x > 10)，判断ary_col中是否每个元素都大于10。\n" +
+          "  - all_match(array_col, predicate): array中是否所有element都满足特定条件\n" +
+          "  - any_match(array_col, predicate): array中是否有一个element满足特定条件\n" +
+          "  - none_match(array_col, predicate): array中是否所有element都不满足特定条件\n" +
+          "  - array_contains(array_col, element): array中是否包含element\n" +
+          "- 提供数组数据处理方法：\n" +
+          "  - array_cardinality(array_col): 返回一个array的元素个数（bigint）\n" +
+          "  - array_filter(array_col, predicate): 根据lambda_func对array进行过滤，返回过滤后的新数组（array）\n" +
+          "- 提供团队与人员方法：\n" +
+          "  - current_login_user(): 当前登录用户，返回userkey\n" +
+          "  - team(include_manager, team_name): 表示名字为team_name的团队。入参：include_manager(bool)表示是否包含管理者；team_name(varchar)表示团队名称。返回array(varchar)类型。举例：team(true, '后端开发团队')\n" +
+          "  - participate_roles(): 返回array(varchar)，表示所有参与角色的rolekey\n" +
+          "  - all_participate_persons(): 返回array(varchar)，表示所有参与人的userkey\n" +
+          "- 提供时间判断方法，返回bool类型来表示是否满足条件：\n" +
+          "  - 入参：col_name(date或datetime类型)；date_para可选值：today/tomorrow/yesterday/current_week/next_week/last_week/current_month/next_month/last_month/future/past；days(varchar，可选，在date_para等于future、past、today时表示偏移天数)\n" +
+          "  - RELATIVE_DATETIME_EQ(col_name, 'date_para', ['days']): 等于某一特定相对时间\n" +
+          "  - RELATIVE_DATETIME_GT(col_name, 'date_para', ['days']): 大于某一特定相对时间\n" +
+          "  - RELATIVE_DATETIME_GE(col_name, 'date_para', ['days']): 大于等于某一特定相对时间\n" +
+          "  - RELATIVE_DATETIME_LT(col_name, 'date_para', ['days']): 小于某一特定相对时间\n" +
+          "  - RELATIVE_DATETIME_LE(col_name, 'date_para', ['days']): 小于等于某一特定相对时间\n" +
+          "  - RELATIVE_DATETIME_BETWEEN(col_name, 'date_para', ['days']): 属于某一特定相对时间\n" +
+          "  - 举例：RELATIVE_DATETIME_EQ(`创建时间`, 'today')表示创建时间等于今天；RELATIVE_DATETIME_EQ(`创建时间`, 'today', '3d')表示创建时间等于今天后3天\n" +
+          "MOQL示例：\n" +
+          "1. select `工作项id` from `测试空间`.`需求` where `是否冻结` = 0; 查询所有未冻结的需求工作项ID\n" +
+          "2. select `工作项id` from `测试空间`.`需求` where `名称` like '%a%'; 查询所有名称中包含字母a的需求工作项ID\n" +
+          "3. select `工作项id` from `测试空间`.`需求` where any_match(`当前负责人`, x -> x in (current_login_user(), '小李')); 当前负责人存在选项等于小李\n" +
+          "4. select `工作项id` from `测试空间`.`需求` where any_match(`当前负责人`, usr -> usr in team(include_manager, '团队1') OR usr in ('小王')); 当前负责人在团队1里或者等于小王\n" +
+          "5. SELECT `工作项id` FROM `测试空间`.`需求` WHERE `__开发周期_开始时间` > '2025-01-01' AND `__开发周期_结束时间` < '2025-01-31'; 当要查询的属性为schedule类型时，请以带__A_B的特殊格式请求\n" +
+          "6. 对于角色的查询，需要以带__前缀的特殊格式请求，比如查询RD：SELECT `工作项id` FROM `测试空间`.`需求` WHERE array_contains(__RD, '张三');",
+      )
+      .optional(),
+    page_num: z
+      .number()
+      .describe(
+        "页码，从1开始。此参数为快捷分页参数，也可使用 group_pagination_list 实现更复杂的分页",
+      )
+      .optional(),
+  }),
+
+  // ── 人员排期 ──────────────────────────────────────────
+  z.object({
+    action: z
+      .literal("list_schedule")
+      .describe(
+        "获取指定空间（project_key）下指定人员（user_key）在指定时间区间内的个人排期与工作量明细，支持多用户、多工作项类型聚合展示。应用场景：团队人力分析、排期评审、识别超载/空闲成员、评估迭代与项目整体容量。与search_by_mql需要精确入参查询语句才能返回工作项列表不同，本工具可以精确查询指定用户在节点/子任务/工作项上的排期和估分数据。返回说明：返回user_workload_list+total，其中每个用户包含基础信息、排期任务明细（含状态、节点、子任务时间等）及总估分、未排期任务数量等汇总字段。",
+      ),
+    project_key: z
+      .string()
+      .describe(
+        "传入要查询的工作项所属空间标识。支持直接输入空间的projectKey、空间名称或simple_name",
+      ),
+    start_time: z
+      .string()
+      .describe(
+        "传入查询排期的时间范围（最大不超过3个月）开始时间，请严格按照以下格式输入：2006-01-01",
+      ),
+    end_time: z
+      .string()
+      .describe(
+        "传入查询排期的时间范围结束时间（最大不超过3个月），请严格按照以下格式输入：2006-01-01",
+      ),
+    user_keys: z
+      .array(z.string())
+      .describe(
+        "传入要查询排期的用户的唯一标识，支持输入名称、邮箱、userkey，支持传入多个，最多支持20个",
+      ),
+    work_item_type_keys: z
+      .array(z.string())
+      .describe(
+        "要查询的个人任务的唯一标识，支持输入名称、系统标识或work_item_type_key，如story、需求、issue、缺陷、子任务、sub_task等。查询所有工作项类型时可以传入_all",
+      )
       .optional(),
   }),
 ]);
@@ -287,6 +453,7 @@ const LarkProjectConfigSchema = z.object({
   pluginId: z.string().min(1, "pluginId 不能为空"),
   pluginSecret: z.string().min(1, "pluginSecret 不能为空"),
   userKey: z.string().min(1, "userKey 不能为空"),
+  mcpKey: z.string().min(1, "mcpKey 不能为空"),
 });
 
 /**
@@ -309,7 +476,12 @@ const configSchema = {
     },
     userKey: {
       label: "User Key",
-      placeholder: "例如: ou_xxx 或 user_xxx",
+      placeholder: "例如: 7136000000000000676",
+    },
+    mcpKey: {
+      label: "MCP Key",
+      placeholder: "例如: m-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      sensitive: true,
     },
   },
 };
@@ -338,9 +510,14 @@ const larkProjectPlugin = {
   register(api: OpenClawPluginApi) {
     const config = configSchema.parse(api.pluginConfig);
 
-    const client = new LarkProject({
+    const client = new LarkProjectClient({
       pluginId: config.pluginId,
       pluginSecret: config.pluginSecret,
+      userKey: config.userKey,
+    });
+
+    const mcpClient = new LarkProjectMCPClient({
+      mcpKey: config.mcpKey,
       userKey: config.userKey,
     });
 
@@ -405,6 +582,54 @@ const larkProjectPlugin = {
 
               case "abort_work_item":
                 return json(await client.abortWorkItem(params));
+
+              case "get_work_item":
+                return json(
+                  await client.getWorkItem({
+                    project_key: params.project_key,
+                    work_item_id: params.work_item_id,
+                  }),
+                );
+
+              case "get_view_detail":
+                return json(
+                  await client.getViewDetail({
+                    project_key: params.project_key,
+                    view_id: params.view_id,
+                    page_num: params.page_num,
+                    page_size: params.page_size,
+                  }),
+                );
+
+              case "get_work_item_schema":
+                return json(
+                  await client.getWorkItemSchema({
+                    project_key: params.project_key,
+                    work_item_type_key: params.work_item_type_key,
+                  }),
+                );
+
+              case "search_by_mql":
+                return json(
+                  await mcpClient.searchByMql({
+                    project_key: params.project_key,
+                    moql: params.moql,
+                    session_id: params.session_id,
+                    group_pagination_list: params.group_pagination_list,
+                    page_num: params.page_num,
+                  }),
+                );
+
+              case "list_schedule":
+                return json(
+                  await mcpClient.listSchedule({
+                    project_key: params.project_key,
+                    start_time: params.start_time,
+                    end_time: params.end_time,
+                    user_keys: params.user_keys,
+                    work_item_type_keys: params.work_item_type_keys,
+                  }),
+                );
 
               default:
                 return json({

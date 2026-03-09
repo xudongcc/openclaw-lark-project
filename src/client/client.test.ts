@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { LarkProject } from "./sdk";
+import { LarkProjectClient } from "./client";
 
 const PLUGIN_ID = process.env.LARK_PROJECT_PLUGIN_ID!;
 const PLUGIN_SECRET = process.env.LARK_PROJECT_PLUGIN_SECRET!;
@@ -8,13 +8,13 @@ const USER_KEY = process.env.LARK_PROJECT_USER_KEY!;
 
 const skip = !PLUGIN_ID || !PLUGIN_SECRET || !PROJECT_KEY || !USER_KEY;
 
-describe.skipIf(skip)("LarkProject", () => {
-  let client: LarkProject;
+describe.skipIf(skip)("LarkProjectClient", () => {
+  let client: LarkProjectClient;
   const WORK_ITEM_TYPE = process.env.LARK_WORK_ITEM_TYPE || "story";
   let workItemId: string;
 
   beforeAll(async () => {
-    client = new LarkProject({
+    client = new LarkProjectClient({
       pluginId: PLUGIN_ID,
       pluginSecret: PLUGIN_SECRET,
       userKey: USER_KEY,
@@ -648,6 +648,145 @@ describe.skipIf(skip)("LarkProject", () => {
 
       expect(result.err_code).toBe(0);
       console.log(`最终清理成功: ${createdWorkItemId}`);
+    });
+  });
+
+  // ── 视图查询 ───────────────────────────────────────
+
+  describe("getViewDetail", () => {
+    it("should throw when project_key is empty", async () => {
+      await expect(
+        client.getViewDetail({ project_key: "", view_id: "test" }),
+      ).rejects.toThrow("缺少 project_key");
+    });
+
+    it("should throw when view_id is empty", async () => {
+      await expect(
+        client.getViewDetail({ project_key: PROJECT_KEY, view_id: "" }),
+      ).rejects.toThrow("缺少 view_id");
+    });
+
+    it("should get view detail with valid view_id (e2e)", async () => {
+      const result = await client.getViewDetail({
+        project_key: PROJECT_KEY,
+        view_id: "IebvmcKDg",
+        page_size: 10,
+      });
+
+      expect(result.err_code).toBe(0);
+      expect(result.data).toBeDefined();
+      expect(result.data.view_id).toBe("IebvmcKDg");
+      expect(result.data.name).toBeTruthy();
+      expect(Array.isArray(result.data.work_item_id_list)).toBe(true);
+      expect(result.pagination).toBeDefined();
+      expect(typeof result.pagination.total).toBe("number");
+
+      // 自动查询的工作项完整详情
+      const workItems = result.data.work_items;
+      expect(workItems).toBeDefined();
+      expect(workItems!.length).toBeGreaterThan(0);
+
+      const firstItem = workItems![0];
+      expect(firstItem.name).toBeTruthy();
+      expect(firstItem.work_item_type_key).toBeTruthy();
+      expect(Array.isArray(firstItem.fields)).toBe(true);
+      expect(firstItem.fields.length).toBeGreaterThan(0);
+      console.log(
+        `视图详情: ${result.data.name}, 工作项数: ${result.pagination.total}, 首个: ${firstItem.name}, 字段数: ${firstItem.fields.length}`,
+      );
+    });
+  });
+
+  describe("getWorkItem", () => {
+    it("should throw when project_key is empty", async () => {
+      await expect(
+        client.getWorkItem({ project_key: "", work_item_id: "123" }),
+      ).rejects.toThrow("缺少 project_key");
+    });
+
+    it("should throw when work_item_id is empty", async () => {
+      await expect(
+        client.getWorkItem({ project_key: PROJECT_KEY, work_item_id: "" }),
+      ).rejects.toThrow("缺少 work_item_id");
+    });
+
+    it("should get work item detail (e2e)", async () => {
+      const result = await client.getWorkItem({
+        project_key: PROJECT_KEY,
+        work_item_id: workItemId,
+      });
+
+      expect(result.err_code).toBe(0);
+      expect(result.data).toBeDefined();
+      expect(result.data.id).toBe(Number(workItemId));
+      expect(result.data.name).toBeTruthy();
+      expect(result.data.work_item_type_key).toBe(WORK_ITEM_TYPE);
+      expect(Array.isArray(result.data.fields)).toBe(true);
+      expect(result.data.fields.length).toBeGreaterThan(0);
+      expect(result.data.current_nodes).toBeDefined();
+      console.log(
+        `工作项: ${result.data.name}, 类型: ${result.data.work_item_type_key}, 字段数: ${result.data.fields.length}`,
+      );
+    });
+  });
+
+  // ── 工作项元数据 ──────────────────────────────────────
+
+  describe("getWorkItemSchema", () => {
+    it("should throw when project_key is empty", async () => {
+      await expect(
+        client.getWorkItemSchema({ project_key: "", work_item_type_key: "story" }),
+      ).rejects.toThrow("缺少 project_key");
+    });
+
+    it("should throw when work_item_type_key is empty", async () => {
+      await expect(
+        client.getWorkItemSchema({ project_key: PROJECT_KEY, work_item_type_key: "" }),
+      ).rejects.toThrow("缺少 work_item_type_key");
+    });
+
+    it("should get fields and roles for story (e2e)", async () => {
+      const result = await client.getWorkItemSchema({
+        project_key: PROJECT_KEY,
+        work_item_type_key: WORK_ITEM_TYPE,
+      });
+
+      expect(result.err_code).toBe(0);
+      expect(result.data).toBeDefined();
+      expect(Array.isArray(result.data.fields)).toBe(true);
+      expect(result.data.fields.length).toBeGreaterThan(0);
+      expect(Array.isArray(result.data.roles)).toBe(true);
+      expect(result.data.roles.length).toBeGreaterThan(0);
+
+      const firstField = result.data.fields[0];
+      expect(firstField.field_key).toBeTruthy();
+      expect(firstField.field_name).toBeTruthy();
+      expect(firstField.field_type_key).toBeTruthy();
+
+      const firstRole = result.data.roles[0];
+      expect(firstRole.id).toBeTruthy();
+      expect(firstRole.name).toBeTruthy();
+
+      console.log(
+        `字段数: ${result.data.fields.length}, 角色数: ${result.data.roles.length}`,
+      );
+      console.log(
+        `角色列表: ${JSON.stringify(result.data.roles.map((r: any) => ({ id: r.id, name: r.name })))}`,
+      );
+    });
+
+    it("should get fields and roles for issue (e2e)", async () => {
+      const result = await client.getWorkItemSchema({
+        project_key: PROJECT_KEY,
+        work_item_type_key: "issue",
+      });
+
+      expect(result.err_code).toBe(0);
+      expect(result.data.fields.length).toBeGreaterThan(0);
+      expect(result.data.roles.length).toBeGreaterThan(0);
+      console.log(
+        `issue 字段数: ${result.data.fields.length}, 角色数: ${result.data.roles.length}`,
+      );
     });
   });
 });
