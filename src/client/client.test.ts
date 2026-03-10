@@ -789,4 +789,40 @@ describe.skipIf(skip)("LarkProjectClient", () => {
       );
     });
   });
+
+  // ── 空间团队人员查询 ──────────────────────────────────
+
+  describe("listTeams", () => {
+    it("should throw when project_key is empty", async () => {
+      await expect(
+        client.listTeams({
+          project_key: "",
+        }),
+      ).rejects.toThrow("缺少 project_key");
+    });
+
+    it("should list teams (e2e)", async () => {
+      const result = await client.listTeams({
+        project_key: PROJECT_KEY,
+        limit: 10,
+      });
+
+      expect(result.err_code).toBe(0);
+      expect(result.data).toBeDefined();
+      expect(Array.isArray(result.data)).toBe(true);
+      expect(typeof result.has_more).toBe("boolean");
+
+      if (result.data.length > 0) {
+        const team = result.data[0];
+        expect(team.team_id).toBeTruthy();
+        expect(team.team_name).toBeTruthy();
+        expect(Array.isArray(team.user_keys)).toBe(true);
+        expect(Array.isArray(team.administrators)).toBe(true);
+        expect(Array.isArray(team.members)).toBe(true);
+        console.log(
+          `团队: ${team.team_name} (id: ${team.team_id}), 人员: ${team.user_keys.length}`,
+        );
+      }
+    });
+  });
 });

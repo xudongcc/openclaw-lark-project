@@ -18,6 +18,10 @@ import type {
   GetWorkItemParams,
   GetViewDetailParams,
   GetWorkItemSchemaParams,
+  ListTeamsParams,
+  QueryUsersParams,
+  UserDetail,
+  TeamWithDetails,
   ViewDetail,
   WorkItem,
   CreateWorkItemCommentResult,
@@ -35,6 +39,7 @@ import type {
   GetWorkItemResult,
   GetViewDetailResult,
   GetWorkItemSchemaResult,
+  ListTeamsResult,
   LarkProjectResponse,
 } from "./types";
 
@@ -808,6 +813,120 @@ export class LarkProjectClient {
       err_code: 0,
       err_msg: "",
       data: { fields, roles },
+    };
+  }
+
+  /**
+   * 批量查询用户详情。
+   *
+   * @param params - 查询参数
+   * @param params.user_keys - user_key 列表（最多 100 个）
+   * @returns 用户详情数组
+   */
+  async queryUsers(
+    params: QueryUsersParams,
+  ): Promise<LarkProjectResponse<UserDetail[]>> {
+    if (!params.user_keys?.length) {
+      throw new Error("缺少 user_keys");
+    }
+    return this.request({
+      method: "POST",
+      path: "/open_api/user/query",
+      body: { user_keys: params.user_keys },
+    });
+  }
+
+  /**
+   * 获取空间下的团队人员列表（含用户详情）。
+   *
+   * @remarks
+   * 返回空间内可见的团队列表，自动查询所有团队人员的详细信息（姓名、邮箱、头像等）。
+   * 支持分页，每页最多 300 个团队。
+   *
+   * @param params - 查询参数
+   * @param params.project_key - 空间标识
+   * @param params.offset - 页码（从 0 开始，默认 0）
+   * @param params.limit - 每页条数（最大 300，默认 300）
+   * @param params.include_user_detail - 是否包含用户详情（默认 false）
+   * @returns API 响应体，data 为团队信息数组
+   */
+  async listTeams(
+    params: ListTeamsParams,
+  ): Promise<ListTeamsResult> {
+    if (!params.project_key) {
+      throw new Error("缺少 project_key");
+    }
+
+    // 1. 获取团队列表
+    const teamsResult = await this.request({
+      method: "GET",
+      path: `/open_api/${params.project_key}/teams/all`,
+      query: {
+        offset: params.offset,
+        limit: params.limit,
+      },
+    }) as any;
+
+    const rawTeams: any[] = teamsResult.data || [];
+
+    // 2. 根据 need_user_detail 决定是否查询用户详情
+    const needDetail = params.include_user_detail === true; // 默认 false
+    const userMap: Record<string, UserDetail> = {};
+
+    if (needDetail && rawTeams.length > 0) {
+      // 收集所有唯一的 user_key
+      const allUserKeys = new Set<string>();
+      for (const team of rawTeams) {
+        for (const key of team.user_keys || []) allUserKeys.add(key);
+        for (const key of team.administrators || []) allUserKeys.add(key);
+        for (const key of team.members || []) allUserKeys.add(key);
+      }
+
+      // 批量查询用户详情（每次最多 100 个）
+      const userKeyArr = Array.from(allUserKeys);
+      for (let i = 0; i < userKeyArr.length; i += 100) {
+        const batch = userKeyArr.slice(i, i + 100);
+        try {
+          const usersResult = await this.queryUsers({ user_keys: batch });
+          for (const user of usersResult.data || []) {
+            userMap[user.user_key] = user;
+          }
+        } catch {
+          // 查询用户详情失败不影响团队列表返回
+        }
+      }
+    }
+
+    // 4. 组装带用户详情的团队数据
+    const teamsWithDetails: TeamWithDetails[] = rawTeams.map((team: any) => {
+      const teamUserKeys: string[] = [
+        ...(team.user_keys || []),
+        ...(team.administrators || []),
+        ...(team.members || []),
+      ];
+      const uniqueKeys = [...new Set(teamUserKeys)];
+      const userDetails: Record<string, UserDetail> = {};
+      for (const key of uniqueKeys) {
+        if (userMap[key]) {
+          userDetails[key] = userMap[key];
+        }
+      }
+      return {
+        team_id: team.team_id,
+        team_name: team.team_name,
+        user_keys: team.user_keys || [],
+        administrators: team.administrators || [],
+        members: team.members || [],
+        user_details: userDetails,
+      };
+    });
+
+    return {
+      data: teamsWithDetails,
+      has_more: teamsResult.has_more ?? false,
+      err_code: teamsResult.err_code ?? 0,
+      err_msg: teamsResult.err_msg ?? "",
+      err: teamsResult.err ?? {},
     };
   }
 }

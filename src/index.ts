@@ -446,6 +446,44 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
       )
       .optional(),
   }),
+
+  // ── 用户查询 ──────────────────────────────────────────
+  z.object({
+    action: z
+      .literal("query_users")
+      .describe(
+        "批量查询用户详情。根据 user_key 列表获取用户的详细信息，包括中文名（name_cn）、英文名（name_en）、邮箱（email）、头像（avatar_url）、状态（status）等。每次最多查询 100 个用户。",
+      ),
+    user_keys: z
+      .array(z.string())
+      .describe("要查询的用户 user_key 列表，最多 100 个"),
+  }),
+
+  // ── 空间团队人员 ────────────────────────────────────────
+  z.object({
+    action: z
+      .literal("list_teams")
+      .describe(
+        "获取指定空间下的团队人员列表。返回团队 ID、团队名称、人员列表（user_keys）、管理员列表（administrators）、成员列表（members）。设置 include_user_detail=true 时自动查询用户详情，返回 user_details 映射（含 name_cn、email、avatar_url、status 等）。",
+      ),
+    project_key: z
+      .string()
+      .describe(
+        '空间唯一标识（project_key 或 simple_name），如 "openclaw"',
+      ),
+    offset: z
+      .number()
+      .describe("页码（从 0 开始，默认 0）")
+      .optional(),
+    limit: z
+      .number()
+      .describe("每页条数（最大 300，默认 300）")
+      .optional(),
+    include_user_detail: z
+      .boolean()
+      .describe("是否包含用户详情（默认 false）。设为 true 时自动查询每个用户的姓名、邮箱等信息")
+      .optional(),
+  }),
 ]);
 
 /** 插件配置 Zod Schema。 */
@@ -628,6 +666,23 @@ const larkProjectPlugin = {
                     end_time: params.end_time,
                     user_keys: params.user_keys,
                     work_item_type_keys: params.work_item_type_keys,
+                  }),
+                );
+
+              case "query_users":
+                return json(
+                  await client.queryUsers({
+                    user_keys: params.user_keys,
+                  }),
+                );
+
+              case "list_teams":
+                return json(
+                  await client.listTeams({
+                    project_key: params.project_key,
+                    offset: params.offset,
+                    limit: params.limit,
+                    include_user_detail: params.include_user_detail,
                   }),
                 );
 

@@ -451,6 +451,59 @@ description: |
 
 ---
 
+### query_users — 批量查询用户详情
+
+根据 user_key 列表查询用户详细信息。每次最多 100 个。
+
+```json
+{
+  "action": "query_users",
+  "user_keys": ["7136000000000000676", "7136015608381980677"]
+}
+```
+
+**返回**：`data` 字段为用户详情数组，每项包含：
+
+| 字段         | 说明                                             |
+| ------------ | ------------------------------------------------ |
+| `user_key`   | 用户唯一标识                                     |
+| `name_cn`    | 中文名                                           |
+| `name_en`    | 英文名                                           |
+| `email`      | 邮箱                                             |
+| `avatar_url` | 头像链接                                         |
+| `status`     | 状态：`activated`/`resigned`/`frozen`/`initialized` |
+| `name`       | 多语言名称（`zh_cn`、`en_us`、`default`）        |
+| `out_id`     | 飞书开放平台 union_id                             |
+
+---
+
+### list_teams — 获取空间团队人员
+
+获取空间下的团队列表。设置 `include_user_detail=true` 时自动调用 `query_users` 补充用户详情。
+
+```json
+{
+  "action": "list_teams",
+  "project_key": "openclaw",
+  "include_user_detail": true
+}
+```
+
+**返回**：`data` 字段为团队数组，每项包含：
+
+| 字段             | 说明                                              |
+| ---------------- | ------------------------------------------------- |
+| `team_id`        | 团队 ID                                           |
+| `team_name`      | 团队名称                                          |
+| `user_keys`      | 人员 user_key 列表                                |
+| `administrators` | 管理员 user_key 列表                              |
+| `members`        | 成员 user_key 列表                                |
+| `user_details`   | `Record<user_key, UserDetail>`（仅 `include_user_detail=true` 时填充） |
+
+**可选参数**：`offset`（页码，从 0 开始）、`limit`（每页条数，最大 300）、`include_user_detail`（是否包含用户详情，默认 false）。
+
+---
+
 ## 标准流程
 
 ### 更新字段
@@ -492,6 +545,12 @@ description: |
 2. `change_state`（传入 `transition_id`）
 3. `get_work_item_workflow` 回读验证
 
+### 查询用户与团队
+
+1. 已有 `user_key` → `query_users` 获取用户详情（姓名、邮箱等）
+2. 查看空间团队 → `list_teams` 返回团队列表及用户详情
+3. `list_teams` 返回的 `user_details` 已自动填充，无需额外调用 `query_users`
+
 ## 插件配置
 
 | 字段           | 说明                                                       |
@@ -513,3 +572,5 @@ description: |
 | `Node Is Not Arrived`                      | 节点未到达（status≠2），无法操作                                             |
 | `Node Is Completed`                        | 节点已完成（status=3），无法再次完成                                         |
 | `Required Field Is Not Set` (20038)        | 流转前必填字段未填写（如负责人、排期），先补充必填信息                       |
+| `User Not Found` (30006)                   | user_key 不正确；或使用虚拟 token 时只能查插件协作者                         |
+
