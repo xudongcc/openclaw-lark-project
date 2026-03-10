@@ -1,3 +1,11 @@
+# [1.10.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.9.1...v1.10.0) (2026-03-10)
+
+
+### Features
+
+* 严格限制工具输入输出格式，统一所有工具输出时间格式。 ([e55b758](https://github.com/xudongcc/openclaw-lark-project/commit/e55b758e6929c41002f32204ac7c801b0a4f4e30))
+* 优化用户工具 ([6457fa5](https://github.com/xudongcc/openclaw-lark-project/commit/6457fa538b05c1f25ea5da732447414ca59bb49e))
+
 ## [1.9.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.9.0...v1.9.1) (2026-03-10)
 
 
