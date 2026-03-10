@@ -18,6 +18,7 @@ export const GetTeamsParamsSchema = z
       .number()
       .int()
       .min(0)
+      .optional()
       .default(0)
       .describe("分页偏移量，从 0 开始"),
     /** 每页条数（最大 300，默认 300） */
@@ -26,14 +27,16 @@ export const GetTeamsParamsSchema = z
       .int()
       .min(1)
       .max(300)
+      .optional()
       .default(300)
       .describe("单页条数，范围 1~300，默认 300"),
     /** 是否包含用户详情（默认 false） */
     include_user_detail: z
       .boolean()
+      .optional()
       .default(false)
       .describe(
-        "是否立即获取成员详细信息（设为 true 会在响应的 user_details 中返回 name_cn、email 等，但不建议在大量数据时开启）",
+        "是否获取成员详细信息（设为 true 会在 user_details 中返回 name、email 等）",
       ),
   })
   .describe(

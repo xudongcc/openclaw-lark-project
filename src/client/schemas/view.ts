@@ -22,13 +22,20 @@ export const GetViewDetailParamsSchema = z
     /** 视图 ID */
     view_id: z.string().describe("传入要查询的视图id，单值"),
     /** 页码（从 1 开始，默认 1） */
-    page_num: z.number().int().min(1).default(1).describe("分页查询页数起点"),
+    page_num: z
+      .number()
+      .int()
+      .min(1)
+      .optional()
+      .default(1)
+      .describe("分页查询页数起点"),
     /** 每页条数（最大 200，默认 200） */
     page_size: z
       .number()
       .int()
       .min(1)
       .max(200)
+      .optional()
       .default(200)
       .describe("每页条数，最大 200"),
   })

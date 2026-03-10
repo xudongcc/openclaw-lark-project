@@ -311,6 +311,7 @@ export type CreateWorkItemParams = z.input<typeof CreateWorkItemParamsSchema>;
 export const AbortWorkItemParamsSchema = WorkItemLocatorSchema.extend({
   is_aborted: z
     .boolean()
+    .optional()
     .default(true)
     .describe("true=终止（默认），false=恢复已终止的工作项"),
   reason: z

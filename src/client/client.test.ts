@@ -877,6 +877,32 @@ describe.skipIf(skip)("LarkProjectClient", () => {
         );
       }
     });
+
+    it("should list teams with user details (e2e)", async () => {
+      const result = await client.getTeams({
+        project_key: PROJECT_KEY,
+        include_user_detail: true,
+        limit: 100,
+      });
+
+      expect(result.err_code).toBe(0);
+      expect(Array.isArray(result.data)).toBe(true);
+
+      if (result.data.length > 0) {
+        const team = result.data[0];
+        expect(team.user_details).toBeDefined();
+        // include_user_detail=true 时应该有用户详情
+        const detailKeys = Object.keys(team.user_details);
+        expect(detailKeys.length).toBeGreaterThan(0);
+
+        const firstUser = team.user_details[detailKeys[0]];
+        expect(firstUser.id).toBeTruthy();
+        expect(firstUser.name).toBeTruthy();
+        console.log(
+          `团队(含详情): ${team.team_name}, 用户详情数: ${detailKeys.length}, 首个: ${firstUser.name}`,
+        );
+      }
+    });
   });
 
   // ── 获取单个用户 ──────────────────────────────────────
