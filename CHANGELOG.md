@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.10.0...v1.10.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* add .optional() before .default() to fix JSON Schema additionalProperties rejection ([4c6d568](https://github.com/xudongcc/openclaw-lark-project/commit/4c6d568ce1816675d6df102f4cfe0ffe7ee0ea0d))
+
 # [1.10.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.9.1...v1.10.0) (2026-03-10)
 
 
