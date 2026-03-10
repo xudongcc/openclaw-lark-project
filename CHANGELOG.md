@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.8.0...v1.8.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* 从插件配置属性中移除 `minLength: 1` 验证，以免导致安装插件失败。 ([f35de64](https://github.com/xudongcc/openclaw-lark-project/commit/f35de642fcd5427153350b1377f652dda24abf40))
+
 # [1.8.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.7.1...v1.8.0) (2026-03-10)
 
 
