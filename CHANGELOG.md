@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.8.2...v1.9.0) (2026-03-10)
+
+
+### Features
+
+* 优化工具输出减少 LLM token 消耗和幻觉 ([861c6ed](https://github.com/xudongcc/openclaw-lark-project/commit/861c6ed0c6f3ec3c22b35532cfa46097af616c52))
+
 ## [1.8.2](https://github.com/xudongcc/openclaw-lark-project/compare/v1.8.1...v1.8.2) (2026-03-10)
 
 
