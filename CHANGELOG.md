@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.7.0...v1.7.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* **comment:** convert created_at timestamp to Date to reduce AI hallucination ([34e71b7](https://github.com/xudongcc/openclaw-lark-project/commit/34e71b79f19fc0deb39888caf33e9290023077ee))
+
 # [1.7.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.6.1...v1.7.0) (2026-03-09)
 
 
