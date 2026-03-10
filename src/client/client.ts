@@ -1,3 +1,4 @@
+import { TTLCache } from "@isaacs/ttlcache";
 import JSONBigInt from "json-bigint";
 import type {
   LarkProjectClientOptions,
@@ -100,6 +101,9 @@ export class LarkProjectClient {
   private readonly pluginSecret: string;
   private readonly userKey: string;
   private pluginToken?: TokenCacheEntry;
+
+  /** 用户详情缓存（1 小时 TTL） */
+  private readonly userCache = new TTLCache<string, UserDetail>({ ttl: 60 * 60 * 1000 });
 
   constructor(options: LarkProjectClientOptions) {
     this.pluginId = options.pluginId;
@@ -289,21 +293,50 @@ export class LarkProjectClient {
     const { projectKey, workItemTypeKey, workItemId } =
       this.resolveWorkItem(params);
 
-    const result = await this.request<Comment[]>({
+    const result = await this.request<any[]>({
       method: "GET",
       path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/comments`,
     });
 
-    // 将 created_at 毫秒时间戳转为 ISO 时间字符串，方便 LLM 理解
+    // 转换字段：移除冗余字段，operator → user_key，时间戳 → ISO
     if (Array.isArray(result.data)) {
-      for (const comment of result.data) {
-        if (typeof comment.created_at === "number" && comment.created_at > 0) {
-          comment.created_at = new Date(comment.created_at);
+      result.data = result.data.map(
+        ({
+          work_item_id,
+          work_item_type_key,
+          operator,
+          created_at,
+          ...rest
+        }) => ({
+          ...rest,
+          user_key: operator,
+          created_at:
+            typeof created_at === "number" && created_at > 0
+              ? new Date(created_at)
+              : created_at,
+        }),
+      ) as any;
+
+      // 查询评论人的 user_name（利用缓存）
+      const userKeys = [
+        ...new Set(result.data.map((c: any) => c.user_key).filter(Boolean)),
+      ];
+      if (userKeys.length > 0) {
+        try {
+          const usersResult = await this.queryUsers({ user_keys: userKeys });
+          const userMap = new Map(
+            (usersResult.data || []).map((u) => [u.user_key, u.user_name]),
+          );
+          for (const comment of result.data as any[]) {
+            comment.user_name = userMap.get(comment.user_key) ?? "";
+          }
+        } catch {
+          // 查询失败不影响评论返回
         }
       }
     }
 
-    return result;
+    return result as unknown as ListWorkItemCommentsResult;
   }
 
   /**
@@ -829,11 +862,44 @@ export class LarkProjectClient {
     if (!params.user_keys?.length) {
       throw new Error("缺少 user_keys");
     }
-    return this.request({
-      method: "POST",
-      path: "/open_api/user/query",
-      body: { user_keys: params.user_keys },
-    });
+
+    // 区分缓存命中和未命中的 key
+    const cached: UserDetail[] = [];
+    const missing: string[] = [];
+    for (const key of params.user_keys) {
+      const hit = this.userCache.get(key);
+      if (hit) {
+        cached.push(hit);
+      } else {
+        missing.push(key);
+      }
+    }
+
+    // 仅请求未缓存的 key
+    if (missing.length > 0) {
+      const result = await this.request<any[]>({
+        method: "POST",
+        path: "/open_api/user/query",
+        body: { user_keys: missing },
+      });
+      for (const raw of result.data || []) {
+        // 移除冗余字段，name.default → user_name
+        const { username, avatar_url, name_cn, name_en, name, ...rest } = raw;
+        const user: UserDetail = {
+          ...rest,
+          user_name: name?.default ?? "",
+        };
+        this.userCache.set(user.user_key, user);
+        cached.push(user);
+      }
+    }
+
+    return {
+      data: cached,
+      err_code: 0,
+      err_msg: "",
+      err: {},
+    } as LarkProjectResponse<UserDetail[]>;
   }
 
   /**
@@ -850,22 +916,20 @@ export class LarkProjectClient {
    * @param params.include_user_detail - 是否包含用户详情（默认 false）
    * @returns API 响应体，data 为团队信息数组
    */
-  async listTeams(
-    params: ListTeamsParams,
-  ): Promise<ListTeamsResult> {
+  async listTeams(params: ListTeamsParams): Promise<ListTeamsResult> {
     if (!params.project_key) {
       throw new Error("缺少 project_key");
     }
 
     // 1. 获取团队列表
-    const teamsResult = await this.request({
+    const teamsResult = (await this.request({
       method: "GET",
       path: `/open_api/${params.project_key}/teams/all`,
       query: {
         offset: params.offset,
         limit: params.limit,
       },
-    }) as any;
+    })) as any;
 
     const rawTeams: any[] = teamsResult.data || [];
 

@@ -7,14 +7,12 @@ import type { WorkItemLocator } from "./common";
 export interface Comment {
   /** 评论 ID（字符串，BigInt） */
   id: string;
-  /** 评论所属工作项 ID */
-  work_item_id: number;
-  /** 评论所属工作项类型 */
-  work_item_type_key: string;
-  /** 评论创建时间（已从毫秒时间戳转换为 Date 对象） */
+  /** 评论创建时间（ISO 格式） */
   created_at: Date;
   /** 评论人 user_key */
-  operator: string;
+  user_key: string;
+  /** 评论人名称 */
+  user_name: string;
   /** 评论内容 */
   content: string;
 }
