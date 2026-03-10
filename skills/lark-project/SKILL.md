@@ -56,7 +56,7 @@ description: |
 }
 ```
 
-**返回**：`data` 字段为评论数组，每条包含 `id`、`content`、`creator`、`created_at` 等。
+**返回**：`data` 字段为评论数组，每条包含 `id`、`user_key`、`user_name`、`content`、`created_at`。
 
 ---
 
@@ -464,16 +464,13 @@ description: |
 
 **返回**：`data` 字段为用户详情数组，每项包含：
 
-| 字段         | 说明                                             |
-| ------------ | ------------------------------------------------ |
-| `user_key`   | 用户唯一标识                                     |
-| `name_cn`    | 中文名                                           |
-| `name_en`    | 英文名                                           |
-| `email`      | 邮箱                                             |
-| `avatar_url` | 头像链接                                         |
-| `status`     | 状态：`activated`/`resigned`/`frozen`/`initialized` |
-| `name`       | 多语言名称（`zh_cn`、`en_us`、`default`）        |
-| `out_id`     | 飞书开放平台 union_id                             |
+| 字段        | 说明                                             |
+| ----------- | ------------------------------------------------ |
+| `user_key`  | 用户唯一标识                                     |
+| `user_name` | 用户名称                                         |
+| `email`     | 邮箱                                             |
+| `out_id`    | 飞书开放平台 union_id                             |
+| `status`    | 状态：`activated`/`resigned`/`frozen`/`initialized` |
 
 ---
 
