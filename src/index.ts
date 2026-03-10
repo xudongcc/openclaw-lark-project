@@ -468,20 +468,14 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
       ),
     project_key: z
       .string()
-      .describe(
-        '空间唯一标识（project_key 或 simple_name），如 "openclaw"',
-      ),
-    offset: z
-      .number()
-      .describe("页码（从 0 开始，默认 0）")
-      .optional(),
-    limit: z
-      .number()
-      .describe("每页条数（最大 300，默认 300）")
-      .optional(),
+      .describe('空间唯一标识（project_key 或 simple_name），如 "openclaw"'),
+    offset: z.number().describe("页码（从 0 开始，默认 0）").optional(),
+    limit: z.number().describe("每页条数（最大 300，默认 300）").optional(),
     include_user_detail: z
       .boolean()
-      .describe("是否包含用户详情（默认 false）。设为 true 时自动查询每个用户的姓名、邮箱等信息")
+      .describe(
+        "是否包含用户详情（默认 false）。设为 true 时自动查询每个用户的姓名、邮箱等信息",
+      )
       .optional(),
   }),
 ]);
@@ -499,28 +493,10 @@ const LarkProjectConfigSchema = z.object({
  *
  * @remarks
  * - `parse` 使用 `LarkProjectConfigSchema` 验证并规范化配置
- * - `uiHints` 提供 UI 渲染提示（标签、占位符、敏感标记）
  */
 const configSchema = {
   parse(value: unknown): z.infer<typeof LarkProjectConfigSchema> {
     return LarkProjectConfigSchema.parse(value ?? {});
-  },
-  uiHints: {
-    pluginId: { label: "Plugin ID", placeholder: "例如: MII_*" },
-    pluginSecret: {
-      label: "Plugin Secret",
-      placeholder: "输入插件密钥",
-      sensitive: true,
-    },
-    userKey: {
-      label: "User Key",
-      placeholder: "例如: 7136000000000000676",
-    },
-    mcpKey: {
-      label: "MCP Key",
-      placeholder: "例如: m-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      sensitive: true,
-    },
   },
 };
 
