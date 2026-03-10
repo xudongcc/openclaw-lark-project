@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.9.0...v1.9.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* 更新 SKILL.md 工具返回字段文档 ([f5338d7](https://github.com/xudongcc/openclaw-lark-project/commit/f5338d7ccdf3a91c7a9d8808c9968d57a64b3105))
+
 # [1.9.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.8.2...v1.9.0) (2026-03-10)
 
 
