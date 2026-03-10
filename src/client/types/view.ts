@@ -18,11 +18,11 @@ export interface ViewDetail {
   view_id: string;
   /** 视图名称 */
   name: string;
-  /** 创建人 user_key */
+  /** 创建人 id */
   created_by: string;
   /** 创建时间戳（毫秒） */
   created_at: number;
-  /** 最后修改人 user_key */
+  /** 最后修改人 id */
   modified_by: string;
   /** 是否可编辑 */
   editable: boolean;

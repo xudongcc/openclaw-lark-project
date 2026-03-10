@@ -16,8 +16,8 @@ export interface ListScheduleParams {
   start_time: string;
   /** 结束时间，格式 2006-01-01 */
   end_time: string;
-  /** 用户标识列表（名称、邮箱或 user_key），最多 20 个 */
-  user_keys: string[];
+  /** 用户标识列表（名称、邮箱或 user_id），最多 20 个 */
+  user_ids: string[];
   /** 工作项类型标识列表，如 ["story", "issue"]，传 ["_all"] 查所有类型 */
   work_item_type_keys?: string[];
 }
@@ -149,15 +149,15 @@ export class LarkProjectMCPClient {
     if (!params.end_time) {
       throw new Error("缺少 end_time");
     }
-    if (!Array.isArray(params.user_keys) || params.user_keys.length === 0) {
-      throw new Error("缺少 user_keys");
+    if (!Array.isArray(params.user_ids) || params.user_ids.length === 0) {
+      throw new Error("缺少 user_ids");
     }
 
     const args: Record<string, unknown> = {
       project_key: params.project_key,
       start_time: params.start_time,
       end_time: params.end_time,
-      user_keys: params.user_keys,
+      user_keys: params.user_ids, // 这里传给服务端依然用 user_keys
     };
     if (params.work_item_type_keys) {
       args.work_item_type_keys = params.work_item_type_keys;

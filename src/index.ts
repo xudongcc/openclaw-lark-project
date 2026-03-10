@@ -83,7 +83,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
             ),
           owners: z
             .array(z.string())
-            .describe('该角色的人员 user_key 列表，如 ["7136000000000000676"]'),
+            .describe('该角色的人员 id 列表，如 ["7136000000000000676"]'),
         }),
       )
       .describe(
@@ -96,7 +96,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
     action: z
       .literal("update_work_item_field")
       .describe(
-        '更新工作项的任意字段（含描述、业务线、优先级等）。字段 key 和格式可通过 get_work_item_schema 获取。各类型 field_value 格式：单选（priority 等）→ { "label": "P0", "value": "0" }；业务线（business）→ 业务线 ID 字符串（非名称，通过 list_businesses 获取）；文本 → 字符串；数字 → 数值；人员 → user_key 字符串或数组；日期 → 毫秒时间戳；描述（description）→ markdown 字符串。',
+        '更新工作项的任意字段（含描述、业务线、优先级等）。字段 key 和格式可通过 get_work_item_schema 获取。各类型 field_value 格式：单选（priority 等）→ { "label": "P0", "value": "0" }；业务线（business）→ 业务线 ID 字符串（非名称，通过 list_businesses 获取）；文本 → 字符串；数字 → 数值；人员 → id 字符串或数组；日期 → 毫秒时间戳；描述（description）→ markdown 字符串。',
       ),
     ...WorkItemLocator,
     update_fields: z
@@ -110,7 +110,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
           field_value: z
             .any()
             .describe(
-              "字段值，格式随字段类型变化。单选传 {label, value} 对象；业务线传 ID 字符串；描述传 markdown 字符串；日期传毫秒时间戳；人员传 user_key 字符串或数组",
+              "字段值，格式随字段类型变化。单选传 {label, value} 对象；业务线传 ID 字符串；描述传 markdown 字符串；日期传毫秒时间戳；人员传 id 字符串或数组",
             ),
         }),
       )
@@ -155,7 +155,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
     node_owners: z
       .array(z.string())
       .describe(
-        '节点负责人 user_key 列表，建议传入。如 ["7136000000000000676"]',
+        '节点负责人 id 列表，建议传入。如 ["7136000000000000676"]',
       )
       .optional(),
     node_schedule: z
@@ -175,7 +175,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
       .array(
         z.object({
           role: z.string().describe("角色 ID"),
-          owners: z.array(z.string()).describe("人员 user_key 列表"),
+          owners: z.array(z.string()).describe("人员 id 列表"),
         }),
       )
       .describe("流转时同步分配的角色负责人")
@@ -220,7 +220,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
       .array(
         z.object({
           role: z.string().describe("角色 ID"),
-          owners: z.array(z.string()).describe("人员 user_key 列表"),
+          owners: z.array(z.string()).describe("人员 id 列表"),
         }),
       )
       .describe("流转时同步设置的角色人员")
@@ -417,7 +417,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
     action: z
       .literal("list_schedule")
       .describe(
-        "获取指定空间（project_key）下指定人员（user_key）在指定时间区间内的个人排期与工作量明细，支持多用户、多工作项类型聚合展示。应用场景：团队人力分析、排期评审、识别超载/空闲成员、评估迭代与项目整体容量。与search_by_mql需要精确入参查询语句才能返回工作项列表不同，本工具可以精确查询指定用户在节点/子任务/工作项上的排期和估分数据。返回说明：返回user_workload_list+total，其中每个用户包含基础信息、排期任务明细（含状态、节点、子任务时间等）及总估分、未排期任务数量等汇总字段。",
+        "获取指定空间（project_key）下指定人员（id）在指定时间区间内的个人排期与工作量明细，支持多用户、多工作项类型聚合展示。应用场景：团队人力分析、排期评审、识别超载/空闲成员、评估迭代与项目整体容量。与search_by_mql需要精确入参查询语句才能返回工作项列表不同，本工具可以精确查询指定用户在节点/子任务/工作项上的排期和估分数据。返回说明：返回user_workload_list+total，其中每个用户包含基础信息、排期任务明细（含状态、节点、子任务时间等）及总估分、未排期任务数量等汇总字段。",
       ),
     project_key: z
       .string()
@@ -434,10 +434,10 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
       .describe(
         "传入查询排期的时间范围结束时间（最大不超过3个月），请严格按照以下格式输入：2006-01-01",
       ),
-    user_keys: z
+    user_ids: z
       .array(z.string())
       .describe(
-        "传入要查询排期的用户的唯一标识，支持输入名称、邮箱、userkey，支持传入多个，最多支持20个",
+        "传入要查询排期的用户的唯一标识，支持输入名称、邮箱、id 或 user_id，支持传入多个，最多支持 20 个",
       ),
     work_item_type_keys: z
       .array(z.string())
@@ -450,13 +450,24 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
   // ── 用户查询 ──────────────────────────────────────────
   z.object({
     action: z
-      .literal("query_users")
+      .literal("get_user")
       .describe(
-        "批量查询用户详情。根据 user_key 列表获取用户的详细信息，包括中文名（name_cn）、英文名（name_en）、邮箱（email）、头像（avatar_url）、状态（status）等。每次最多查询 100 个用户。",
+        "通过名称、邮箱或用户 ID 获取单个用户详情。推荐在解析 @mentions 或需要精确匹配单个用户时使用此接口。",
       ),
-    user_keys: z
+    query: z.string().describe("要查找的用户名称、邮箱或用户 ID"),
+    project_key: z.string().optional().describe("如果不为空，则限制在该空间从属的租户内搜索"),
+  }),
+
+
+  z.object({
+    action: z
+      .literal("get_users_by_ids")
+      .describe(
+        "批量查询用户详情。根据 id 列表获取用户的详细信息。每次最多查询 100 个用户。",
+      ),
+    ids: z
       .array(z.string())
-      .describe("要查询的用户 user_key 列表，最多 100 个"),
+      .describe("要查询的用户 id 列表，最多 100 个"),
   }),
 
   // ── 空间团队人员 ────────────────────────────────────────
@@ -464,7 +475,7 @@ const LarkProjectToolSchema = z.discriminatedUnion("action", [
     action: z
       .literal("list_teams")
       .describe(
-        "获取指定空间下的团队人员列表。返回团队 ID、团队名称、人员列表（user_keys）、管理员列表（administrators）、成员列表（members）。设置 include_user_detail=true 时自动查询用户详情，返回 user_details 映射（含 name_cn、email、avatar_url、status 等）。",
+        "获取指定空间下的团队人员列表。返回团队 ID、团队名称、人员列表（user_ids）、管理员列表（administrators）、成员列表（members）。设置 include_user_detail=true 时自动查询用户详情，返回 user_details 映射（含 name_cn、email、avatar_url、status 等）。",
       ),
     project_key: z
       .string()
@@ -640,15 +651,29 @@ const larkProjectPlugin = {
                     project_key: params.project_key,
                     start_time: params.start_time,
                     end_time: params.end_time,
-                    user_keys: params.user_keys,
+                    user_ids: params.user_ids,
                     work_item_type_keys: params.work_item_type_keys,
                   }),
                 );
 
-              case "query_users":
+              case "get_user": {
+                const user = await client.getUser(
+                  params.query,
+                  params.project_key,
+                );
+                return json({
+                  data: user ? [user] : [],
+                  err_code: 0,
+                  err_msg: "",
+                  err: {},
+                });
+              }
+
+
+              case "get_users_by_ids":
                 return json(
-                  await client.queryUsers({
-                    user_keys: params.user_keys,
+                  await client.getUsersByIds({
+                    ids: params.ids,
                   }),
                 );
 

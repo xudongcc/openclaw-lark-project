@@ -1,4 +1,4 @@
-import { TTLCache } from "@isaacs/ttlcache";
+import { UserCache } from "./user-cache";
 import JSONBigInt from "json-bigint";
 import type {
   LarkProjectClientOptions,
@@ -20,7 +20,8 @@ import type {
   GetViewDetailParams,
   GetWorkItemSchemaParams,
   ListTeamsParams,
-  QueryUsersParams,
+  GetUsersByIdsParams,
+  SearchUsersParams,
   UserDetail,
   TeamWithDetails,
   ViewDetail,
@@ -43,6 +44,8 @@ import type {
   ListTeamsResult,
   LarkProjectResponse,
 } from "./types";
+import url from "node:url";
+import { default as _ } from "lodash";
 
 const JSON = JSONBigInt({ storeAsString: true });
 
@@ -102,8 +105,29 @@ export class LarkProjectClient {
   private readonly userKey: string;
   private pluginToken?: TokenCacheEntry;
 
-  /** 用户详情缓存（1 小时 TTL） */
-  private readonly userCache = new TTLCache<string, UserDetail>({ ttl: 60 * 60 * 1000 });
+  /** 用户详情缓存 */
+  private readonly userCache = new UserCache();
+
+  /** 通过用户名称或 key 获取用户（优先查缓存，未命中则调用搜索接口） */
+  async getUser(nameOrKey: string, project_key?: string): Promise<UserDetail | undefined> {
+    const cached = this.userCache.get(nameOrKey);
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      const resp = await this.searchUsers({
+        query: nameOrKey,
+        project_key,
+      });
+      // searchUsers 内部会自动将结果写入缓存
+      const users = resp.data || [];
+      // 尝试精确匹配，否则返回第一条匹配结果
+      return users.find(u => u.id === nameOrKey || u.name === nameOrKey) ?? users[0];
+    } catch (err) {
+      return undefined;
+    }
+  }
 
   constructor(options: LarkProjectClientOptions) {
     this.pluginId = options.pluginId;
@@ -298,7 +322,7 @@ export class LarkProjectClient {
       path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/comments`,
     });
 
-    // 转换字段：移除冗余字段，operator → user_key，时间戳 → ISO
+    // 转换字段：移除冗余字段，operator → author.id，时间戳 → ISO
     if (Array.isArray(result.data)) {
       result.data = result.data.map(
         ({
@@ -309,7 +333,7 @@ export class LarkProjectClient {
           ...rest
         }) => ({
           ...rest,
-          user_key: operator,
+          author: { id: operator, name: "" },
           created_at:
             typeof created_at === "number" && created_at > 0
               ? new Date(created_at)
@@ -317,23 +341,45 @@ export class LarkProjectClient {
         }),
       ) as any;
 
-      // 查询评论人的 user_name（利用缓存）
-      const userKeys = [
-        ...new Set(result.data.map((c: any) => c.user_key).filter(Boolean)),
-      ];
-      if (userKeys.length > 0) {
+      // 查询评论人的 name（利用缓存）
+      const userIds = _.compact(_.uniq(_.map(result.data, "author.id")));
+      if (userIds.length > 0) {
         try {
-          const usersResult = await this.queryUsers({ user_keys: userKeys });
-          const userMap = new Map(
-            (usersResult.data || []).map((u) => [u.user_key, u.user_name]),
-          );
+          const usersResult = await this.getUsersByIds({ ids: userIds });
+          const userMap = new Map(_.map(usersResult.data || [], (u: any): [string, string] => [u.id, u.name]));
           for (const comment of result.data as any[]) {
-            comment.user_name = userMap.get(comment.user_key) ?? "";
+            comment.author.name = userMap.get(comment.author.id) ?? "";
           }
         } catch {
           // 查询失败不影响评论返回
         }
       }
+      // 提取和解析 @mentions
+      const mentionPromises: Promise<void>[] = [];
+      for (const comment of result.data as any[]) {
+        const content = comment.content || "";
+        const matches = content.match(/@([^\s@]+)/g);
+        if (matches) {
+          comment.mentions = [];
+          // 去重后查询
+          const uniqueNames = _.uniq(_.map(matches, (m: string) => m.slice(1)));
+          for (const name of uniqueNames) {
+            mentionPromises.push(
+              this.getUser(name, projectKey)
+                .then((user) => {
+                  if (user) {
+                    comment.mentions.push({
+                      name: user.name,
+                      id: user.id,
+                    });
+                  }
+                })
+                .catch(() => {})
+            );
+          }
+        }
+      }
+      await Promise.all(mentionPromises);
     }
 
     return result as unknown as ListWorkItemCommentsResult;
@@ -408,7 +454,7 @@ export class LarkProjectClient {
    * **注意：这是覆盖更新**，调用时需传入所有角色及其人员，未传入的角色人员会被清空。
    *
    * @param params - 工作项定位参数 + 角色人员列表
-   * @param params.role_owners - 角色人员数组，每项包含 `role`（角色 ID）和 `owners`（user_key 列表）
+   * @param params.role_owners - 角色人员数组，每项包含 `role`（角色 ID）和 `owners`（id 列表）
    * @returns API 响应体
    * @throws 当 `role_owners` 为空时抛出异常
    */
@@ -853,25 +899,25 @@ export class LarkProjectClient {
    * 批量查询用户详情。
    *
    * @param params - 查询参数
-   * @param params.user_keys - user_key 列表（最多 100 个）
+   * @param params.ids - id 列表（最多 100 个）
    * @returns 用户详情数组
    */
-  async queryUsers(
-    params: QueryUsersParams,
+  async getUsersByIds(
+    params: GetUsersByIdsParams,
   ): Promise<LarkProjectResponse<UserDetail[]>> {
-    if (!params.user_keys?.length) {
-      throw new Error("缺少 user_keys");
+    if (!params.ids?.length) {
+      throw new Error("缺少 ids");
     }
 
-    // 区分缓存命中和未命中的 key
+    // 区分缓存命中和未命中的 ID
     const cached: UserDetail[] = [];
     const missing: string[] = [];
-    for (const key of params.user_keys) {
-      const hit = this.userCache.get(key);
+    for (const id of params.ids) {
+      const hit = this.userCache.get(id);
       if (hit) {
         cached.push(hit);
       } else {
-        missing.push(key);
+        missing.push(id);
       }
     }
 
@@ -883,19 +929,67 @@ export class LarkProjectClient {
         body: { user_keys: missing },
       });
       for (const raw of result.data || []) {
-        // 移除冗余字段，name.default → user_name
-        const { username, avatar_url, name_cn, name_en, name, ...rest } = raw;
+        // 移除冗余字段，name.default → name
+        const { username, avatar_url, name_cn, name_en, name, user_key, ...rest } = raw;
         const user: UserDetail = {
           ...rest,
-          user_name: name?.default ?? "",
+          id: user_key,
+          name: name?.default ?? "",
         };
-        this.userCache.set(user.user_key, user);
+        this.userCache.set(user.id, user);
         cached.push(user);
       }
     }
 
     return {
       data: cached,
+      err_code: 0,
+      err_msg: "",
+      err: {},
+    } as LarkProjectResponse<UserDetail[]>;
+  }
+
+  /**
+   * 模糊搜索租户内的用户。
+   *
+   * - POST /open_api/user/search
+   * - 搜索结果自动写入用户缓存
+   *
+   * @param params - 搜索参数
+   * @param params.query - 搜索关键词（用户名称）
+   * @param params.project_key - 空间 ID（可选，用于判断租户）
+   * @returns 匹配的用户详情数组
+   */
+  async searchUsers(
+    params: SearchUsersParams,
+  ): Promise<LarkProjectResponse<UserDetail[]>> {
+    if (!params.query?.trim()) {
+      throw new Error("缺少 query");
+    }
+
+    const result = await this.request<any[]>({
+      method: "POST",
+      path: "/open_api/user/search",
+      body: {
+        query: params.query,
+        ...(params.project_key ? { project_key: params.project_key } : {}),
+      },
+    });
+
+    const users: UserDetail[] = [];
+    for (const raw of result.data || []) {
+      const { username, avatar_url, name_cn, name_en, name, user_key, ...rest } = raw;
+      const user: UserDetail = {
+        ...rest,
+        id: user_key,
+        name: name?.default ?? "",
+      };
+      this.userCache.set(user.id, user);
+      users.push(user);
+    }
+
+    return {
+      data: users,
       err_code: 0,
       err_msg: "",
       err: {},
@@ -938,22 +1032,20 @@ export class LarkProjectClient {
     const userMap: Record<string, UserDetail> = {};
 
     if (needDetail && rawTeams.length > 0) {
-      // 收集所有唯一的 user_key
-      const allUserKeys = new Set<string>();
-      for (const team of rawTeams) {
-        for (const key of team.user_keys || []) allUserKeys.add(key);
-        for (const key of team.administrators || []) allUserKeys.add(key);
-        for (const key of team.members || []) allUserKeys.add(key);
-      }
+      // 收集所有唯一的 user_id
+      const allUserIds = _.uniq(_.flatMap(rawTeams, (team: any) => [
+        ...(team.user_keys || []),
+        ...(team.administrators || []),
+        ...(team.members || [])
+      ]));
 
       // 批量查询用户详情（每次最多 100 个）
-      const userKeyArr = Array.from(allUserKeys);
-      for (let i = 0; i < userKeyArr.length; i += 100) {
-        const batch = userKeyArr.slice(i, i + 100);
+      const chunks = _.chunk(allUserIds, 100);
+      for (const batch of chunks) {
         try {
-          const usersResult = await this.queryUsers({ user_keys: batch });
+          const usersResult = await this.getUsersByIds({ ids: batch });
           for (const user of usersResult.data || []) {
-            userMap[user.user_key] = user;
+            userMap[user.id] = user;
           }
         } catch {
           // 查询用户详情失败不影响团队列表返回
@@ -963,22 +1055,17 @@ export class LarkProjectClient {
 
     // 4. 组装带用户详情的团队数据
     const teamsWithDetails: TeamWithDetails[] = rawTeams.map((team: any) => {
-      const teamUserKeys: string[] = [
+      const uniqueIds = _.uniq([
         ...(team.user_keys || []),
         ...(team.administrators || []),
         ...(team.members || []),
-      ];
-      const uniqueKeys = [...new Set(teamUserKeys)];
-      const userDetails: Record<string, UserDetail> = {};
-      for (const key of uniqueKeys) {
-        if (userMap[key]) {
-          userDetails[key] = userMap[key];
-        }
-      }
+      ]);
+      const userDetails = _.pick(userMap, uniqueIds);
+
       return {
         team_id: team.team_id,
         team_name: team.team_name,
-        user_keys: team.user_keys || [],
+        user_ids: team.user_keys || [],
         administrators: team.administrators || [],
         members: team.members || [],
         user_details: userDetails,

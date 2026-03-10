@@ -22,7 +22,7 @@ export interface WorkItemNode {
   id: string;
   /** 节点名称 */
   name: string;
-  /** 负责人 user_key 列表 */
+  /** 负责人 id 列表 */
   owners: string[];
   /** 是否为里程碑节点 */
   milestone: boolean;
@@ -79,15 +79,15 @@ export interface WorkItem {
   template_id: number;
   /** 模板类型标识 */
   template_type: string;
-  /** 创建人 user_key */
+  /** 创建人 id */
   created_by: string;
   /** 创建时间戳（毫秒） */
   created_at: number;
-  /** 最后修改人 user_key */
+  /** 最后修改人 id */
   updated_by: string;
   /** 最后修改时间戳（毫秒） */
   updated_at: number;
-  /** 删除人 user_key，空字符串表示未删除 */
+  /** 删除人 id，空字符串表示未删除 */
   deleted_by: string;
   /** 删除时间戳（毫秒），0 表示未删除 */
   deleted_at: number;

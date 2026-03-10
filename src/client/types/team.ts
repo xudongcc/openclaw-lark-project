@@ -24,13 +24,13 @@ export interface TeamWithDetails {
   team_id: number;
   /** 团队名称 */
   team_name: string;
-  /** 团队下的人员 user_key 列表 */
-  user_keys: string[];
-  /** 团队下的管理员 user_key 列表 */
+  /** 团队下的人员 user_id 列表 */
+  user_ids: string[];
+  /** 团队下的管理员 user_id 列表 */
   administrators: string[];
-  /** 团队下的成员 user_key 列表 */
+  /** 团队下的成员 user_id 列表 */
   members: string[];
-  /** 人员详情映射（user_key → 用户信息） */
+  /** 人员详情映射（user_id → 用户信息） */
   user_details: Record<string, UserDetail>;
 }
 

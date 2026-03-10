@@ -17,6 +17,9 @@ importers:
       json-bigint:
         specifier: ^1.0.0
         version: 1.0.0
+      lodash:
+        specifier: ^4.17.23
+        version: 4.17.23
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -36,6 +39,9 @@ importers:
       '@types/json-bigint':
         specifier: ^1.0.4
         version: 1.0.4
+      '@types/lodash':
+        specifier: ^4.17.24
+        version: 4.17.24
       '@types/node':
         specifier: ^25.3.5
         version: 25.3.5
@@ -1595,6 +1601,9 @@ packages:
 
   '@types/jsonwebtoken@9.0.10':
     resolution: {integrity: sha512-asx5hIG9Qmf/1oStypjanR7iKTv0gXQ1Ov/jfrX6kS/EO0OFni8orbmGCn0672NHR3kXHwpAwR+B368ZGN/2rA==}
+
+  '@types/lodash@4.17.24':
+    resolution: {integrity: sha512-gIW7lQLZbue7lRSWEFql49QJJWThrTFFeIMJdp3eH4tKoxm1OvEPg02rm4wCCSHS0cL3/Fizimb35b7k8atwsQ==}
 
   '@types/long@4.0.2':
     resolution: {integrity: sha512-MqTGEo5bj5t157U6fA/BiDynNkn0YknVdh48CMPkTSpFTVmvao5UQmm7uEF6xBEo7qIMAlY/JSleYaE6VOdpaA==}
@@ -6307,6 +6316,8 @@ snapshots:
     dependencies:
       '@types/ms': 2.1.0
       '@types/node': 25.3.5
+
+  '@types/lodash@4.17.24': {}
 
   '@types/long@4.0.2': {}
 

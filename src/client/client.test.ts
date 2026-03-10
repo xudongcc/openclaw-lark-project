@@ -816,11 +816,11 @@ describe.skipIf(skip)("LarkProjectClient", () => {
         const team = result.data[0];
         expect(team.team_id).toBeTruthy();
         expect(team.team_name).toBeTruthy();
-        expect(Array.isArray(team.user_keys)).toBe(true);
+        expect(Array.isArray(team.user_ids)).toBe(true);
         expect(Array.isArray(team.administrators)).toBe(true);
         expect(Array.isArray(team.members)).toBe(true);
         console.log(
-          `团队: ${team.team_name} (id: ${team.team_id}), 人员: ${team.user_keys.length}`,
+          `团队: ${team.team_name} (id: ${team.team_id}), 人员: ${team.user_ids.length}`,
         );
       }
     });

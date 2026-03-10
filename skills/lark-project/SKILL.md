@@ -56,7 +56,7 @@ description: |
 }
 ```
 
-**返回**：`data` 字段为评论数组，每条包含 `id`、`user_key`、`user_name`、`content`、`created_at`。
+**返回**：`data` 字段为评论数组，每条包含 `id`、`author`（含 `id` 和 `name`）、`content`、`created_at`、`mentions`（可选，自动提取包含 `id` 和 `name` 的 `@mentions` 数组）。
 
 ---
 
@@ -118,8 +118,8 @@ description: |
 | 业务线（business）  | 业务线 ID 字符串（**必须传 ID，不能传名称**） | `"662f0e13b1a20d5dd5fb3320"`      |
 | 单行文本            | 字符串                                        | `"文本内容"`                      |
 | 数字                | 数值                                          | `11.11`                           |
-| 单选人员            | user_key 字符串                               | `"7356795280xxx"`                 |
-| 多选人员            | user_key 字符串数组                           | `["735xxx", "731xxx"]`            |
+| 单选人员            | id 字符串                                     | `"7356795280xxx"`                 |
+| 多选人员            | id 字符串数组                                 | `["735xxx", "731xxx"]`            |
 | 日期                | 毫秒时间戳                                    | `1722182400000`                   |
 | 描述（description） | markdown 字符串                               | `"# 标题\n内容"`                  |
 
@@ -443,40 +443,59 @@ description: |
 
 **返回**：`user_workload_list` + `total`，其中每个用户包含：
 
-- 基础信息（名称、user_key、邮箱）
+- 基础信息（名称、id、邮箱）
 - 排期任务明细（含状态、节点、子任务时间等）
 - 总估分、未排期任务数量等汇总字段
 
-**约束**：时间范围最大 3 个月（格式 `YYYY-MM-DD`），`user_keys` 最多 20 个（支持输入名称、邮箱、userkey）。
+**约束**：时间范围最大 3 个月（格式 `YYYY-MM-DD`），`user_ids` 最多 20 个（支持输入名称、邮箱、id）。
 
 ---
 
-### query_users — 批量查询用户详情
+### get_users_by_ids — 批量查询用户详情
 
-根据 user_key 列表查询用户详细信息。每次最多 100 个。
+根据 id 列表查询用户详细信息。每次最多 100 个。
 
 ```json
 {
-  "action": "query_users",
-  "user_keys": ["7136000000000000676", "7136015608381980677"]
+  "action": "get_users_by_ids",
+  "ids": ["7136000000000000676", "7136015608381980677"]
 }
 ```
 
 **返回**：`data` 字段为用户详情数组，每项包含：
 
-| 字段        | 说明                                             |
-| ----------- | ------------------------------------------------ |
-| `user_key`  | 用户唯一标识                                     |
-| `user_name` | 用户名称                                         |
-| `email`     | 邮箱                                             |
-| `out_id`    | 飞书开放平台 union_id                             |
-| `status`    | 状态：`activated`/`resigned`/`frozen`/`initialized` |
+| 字段     | 说明                                                |
+| -------- | --------------------------------------------------- |
+| `id`     | 用户唯一标识                                        |
+| `name`   | 用户名称                                            |
+| `email`  | 邮箱                                                |
+| `out_id` | 飞书开放平台 union_id                               |
+| `status` | 状态：`activated`/`resigned`/`frozen`/`initialized` |
+
+---
+
+### get_user — 获取单个用户
+
+通过名称、邮箱或用户 ID 获取单个用户详情。推荐在解析 `@mentions` 或需要精确匹配单个用户时使用此接口。
+
+```json
+{
+  "action": "get_user",
+  "query": "张三",
+  "project_key": "data5"
+}
+```
+
+- `query`: 必填，要查找的用户名称、邮箱或用户 ID。
+- `project_key`: 可选，传入空间 ID 以限制在特定租户内搜索。
+
+**返回**：`data` 字段为包含命中用户的数组（0 或 1 个元素，结构同 `get_users_by_ids`）。
 
 ---
 
 ### list_teams — 获取空间团队人员
 
-获取空间下的团队列表。设置 `include_user_detail=true` 时自动调用 `query_users` 补充用户详情。
+获取空间下的团队列表。设置 `include_user_detail=true` 时自动调用 `get_users_by_ids` 补充用户详情。
 
 ```json
 {
@@ -488,14 +507,14 @@ description: |
 
 **返回**：`data` 字段为团队数组，每项包含：
 
-| 字段             | 说明                                              |
-| ---------------- | ------------------------------------------------- |
-| `team_id`        | 团队 ID                                           |
-| `team_name`      | 团队名称                                          |
-| `user_keys`      | 人员 user_key 列表                                |
-| `administrators` | 管理员 user_key 列表                              |
-| `members`        | 成员 user_key 列表                                |
-| `user_details`   | `Record<user_key, UserDetail>`（仅 `include_user_detail=true` 时填充） |
+| 字段             | 说明                                                                   |
+| ---------------- | ---------------------------------------------------------------------- |
+| `team_id`        | 团队 ID                                                                |
+| `team_name`      | 团队名称                                                               |
+| `user_ids`       | 人员 id 列表                                                           |
+| `administrators` | 管理员 id 列表                                                         |
+| `members`        | 成员 id 列表                                                           |
+| `user_details`   | `Record<string, UserDetail>`（仅 `include_user_detail=true` 时填充）   |
 
 **可选参数**：`offset`（页码，从 0 开始）、`limit`（每页条数，最大 300）、`include_user_detail`（是否包含用户详情，默认 false）。
 
@@ -544,9 +563,9 @@ description: |
 
 ### 查询用户与团队
 
-1. 已有 `user_key` → `query_users` 获取用户详情（姓名、邮箱等）
+1. 已有 `id` → `get_users_by_ids` 获取用户详情（姓名、邮箱等）
 2. 查看空间团队 → `list_teams` 返回团队列表及用户详情
-3. `list_teams` 返回的 `user_details` 已自动填充，无需额外调用 `query_users`
+3. `list_teams` 返回的 `user_details` 已自动填充，无需额外调用 `get_users_by_ids`
 
 ## 插件配置
 
@@ -569,5 +588,4 @@ description: |
 | `Node Is Not Arrived`                      | 节点未到达（status≠2），无法操作                                             |
 | `Node Is Completed`                        | 节点已完成（status=3），无法再次完成                                         |
 | `Required Field Is Not Set` (20038)        | 流转前必填字段未填写（如负责人、排期），先补充必填信息                       |
-| `User Not Found` (30006)                   | user_key 不正确；或使用虚拟 token 时只能查插件协作者                         |
-
+| `User Not Found` (30006)                   | id 不正确；或使用虚拟 token 时只能查插件协作者                               |

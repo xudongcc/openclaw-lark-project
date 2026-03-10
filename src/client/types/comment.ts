@@ -3,18 +3,26 @@ import type { WorkItemLocator } from "./common";
 
 // ── 评论实体类型 ─────────────────────────────────────────
 
+/** 评论中的用户基本信息 */
+export interface CommentUser {
+  id: string;
+  name: string;
+}
+
 /** 评论 */
 export interface Comment {
   /** 评论 ID（字符串，BigInt） */
   id: string;
   /** 评论创建时间（ISO 格式） */
   created_at: Date;
-  /** 评论人 user_key */
-  user_key: string;
+  /** 评论发起人 */
+  author: CommentUser;
   /** 评论人名称 */
   user_name: string;
   /** 评论内容 */
   content: string;
+  /** 解析出的 @mentions 用户列表 */
+  mentions?: CommentUser[];
 }
 
 // ── 评论操作参数 ─────────────────────────────────────────

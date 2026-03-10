@@ -23,6 +23,7 @@
     "@isaacs/ttlcache": "^2.1.4",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "json-bigint": "^1.0.0",
+    "lodash": "^4.17.23",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -31,6 +32,7 @@
     "@semantic-release/github": "^12.0.6",
     "@semantic-release/npm": "^13.1.5",
     "@types/json-bigint": "^1.0.4",
+    "@types/lodash": "^4.17.24",
     "@types/node": "^25.3.5",
     "openclaw": "^2026.3.7",
     "semantic-release": "^25.0.3",
