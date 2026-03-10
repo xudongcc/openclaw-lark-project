@@ -1,3 +1,10 @@
+## [1.8.2](https://github.com/xudongcc/openclaw-lark-project/compare/v1.8.1...v1.8.2) (2026-03-10)
+
+
+### Bug Fixes
+
+* 修复插件安装失败 ([7dfbbd1](https://github.com/xudongcc/openclaw-lark-project/commit/7dfbbd1660cccf843486f441c95c7c969763483a))
+
 ## [1.8.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.8.0...v1.8.1) (2026-03-10)
 
 
