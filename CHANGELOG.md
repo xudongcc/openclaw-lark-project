@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.7.1...v1.8.0) (2026-03-10)
+
+
+### Features
+
+* 新增用户查询和团队人员工具 ([3b24403](https://github.com/xudongcc/openclaw-lark-project/commit/3b2440397a12f5fd50f9d58f98bf769dfbd98cab))
+
 ## [1.7.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.7.0...v1.7.1) (2026-03-10)
 
 
