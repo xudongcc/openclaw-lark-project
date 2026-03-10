@@ -45,12 +45,12 @@ describe.skipIf(skip)("LarkProjectMCPClient", () => {
     });
   });
 
-  // ── listSchedule ────────────────────────────────────
+  // ── getSchedule ────────────────────────────────────
 
-  describe("listSchedule", () => {
+  describe("getSchedule", () => {
     it("should throw when project_key is empty", async () => {
       await expect(
-        client.listSchedule({
+        client.getSchedule({
           project_key: "",
           start_time: "2026-03-01",
           end_time: "2024-02-01",
@@ -61,7 +61,7 @@ describe.skipIf(skip)("LarkProjectMCPClient", () => {
 
     it("should throw when user_ids is empty", async () => {
       await expect(
-        client.listSchedule({
+        client.getSchedule({
           project_key: PROJECT_KEY,
           start_time: "2024-01-01",
           end_time: "2024-02-01",
@@ -71,7 +71,7 @@ describe.skipIf(skip)("LarkProjectMCPClient", () => {
     });
 
     it("should query schedule data (e2e)", async () => {
-      const result: any = await client.listSchedule({
+      const result: any = await client.getSchedule({
         project_key: PROJECT_KEY,
         start_time: "2024-01-01",
         end_time: "2024-02-01",

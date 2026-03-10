@@ -4,6 +4,11 @@
   "description": "OpenClaw plugin for Lark Project workitem description updates",
   "type": "module",
   "license": "MIT",
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "openclaw.plugin.json"
+  ],
   "openclaw": {
     "extensions": [
       "./src/index.ts"

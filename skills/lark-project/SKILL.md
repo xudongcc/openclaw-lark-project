@@ -29,13 +29,13 @@ description: |
 
 ---
 
-### create_work_item_comment — 添加评论
+### create_comment — 添加评论
 
 在工作项下添加一条纯文本评论。
 
 ```json
 {
-  "action": "create_work_item_comment",
+  "action": "create_comment",
   "url": "https://project.feishu.cn/xxx/story/detail/123",
   "content": "评论内容（纯文本，不支持 markdown）"
 }
@@ -45,13 +45,13 @@ description: |
 
 ---
 
-### list_work_item_comments — 查询评论
+### get_comments — 查询评论
 
 获取工作项的所有评论列表。
 
 ```json
 {
-  "action": "list_work_item_comments",
+  "action": "get_comments",
   "url": "https://project.feishu.cn/xxx/story/detail/123"
 }
 ```
@@ -60,13 +60,28 @@ description: |
 
 ---
 
-### delete_work_item_comment — 删除评论
+### update_comment — 更新评论
 
-仅评论创建人可删除。`comment_id` 通过 `list_work_item_comments` 获取。
+更新指定评论。仅评论的原始创建人可操作。
 
 ```json
 {
-  "action": "delete_work_item_comment",
+  "action": "update_comment",
+  "url": "https://project.feishu.cn/xxx/story/detail/123",
+  "comment_id": "7xxx",
+  "content": "新的评论内容"
+}
+```
+
+---
+
+### delete_comment — 删除评论
+
+仅评论创建人可删除。`comment_id` 通过 `get_comments` 获取。
+
+```json
+{
+  "action": "delete_comment",
   "url": "https://project.feishu.cn/xxx/story/detail/123",
   "comment_id": "7xxx"
 }
@@ -125,9 +140,9 @@ description: |
 
 #### 更新业务线的正确流程
 
-业务线 `field_value` 必须传 **业务线 ID**（通过 `list_businesses` 获取），不能传名称：
+业务线 `field_value` 必须传 **业务线 ID**（通过 `get_businesses` 获取），不能传名称：
 
-1. 调用 `list_businesses` 获取空间下所有业务线的 `id` 和 `name`
+1. 调用 `get_businesses` 获取空间下所有业务线的 `id` 和 `name`
 2. 从返回结果中找到目标业务线的 `id`
 3. 用该 ID 作为 `field_value` 更新
 
@@ -143,13 +158,13 @@ description: |
 
 ---
 
-### list_businesses — 获取业务线列表
+### get_businesses — 获取业务线列表
 
 获取指定空间下所有业务线，用于更新业务线字段前查找正确的 ID。
 
 ```json
 {
-  "action": "list_businesses",
+  "action": "get_businesses",
   "project_key": "openclaw"
 }
 ```
@@ -424,7 +439,7 @@ description: |
 
 ---
 
-### list_schedule — 查询人员排期
+### get_schedule — 查询人员排期
 
 获取指定空间下指定人员在指定时间区间内的个人排期与工作量明细，支持多用户、多工作项类型聚合展示。
 
@@ -432,7 +447,7 @@ description: |
 
 ```json
 {
-  "action": "list_schedule",
+  "action": "get_schedule",
   "project_key": "openclaw",
   "start_time": "2026-03-01",
   "end_time": "2026-03-31",
@@ -476,30 +491,29 @@ description: |
 
 ### get_user — 获取单个用户
 
-通过名称、邮箱或用户 ID 获取单个用户详情。推荐在解析 `@mentions` 或需要精确匹配单个用户时使用此接口。
+通过 ID、名称或邮箱精确获取单个用户详情。
 
 ```json
 {
   "action": "get_user",
-  "query": "张三",
-  "project_key": "data5"
+  "query": "张三"
 }
 ```
 
-- `query`: 必填，要查找的用户名称、邮箱或用户 ID。
-- `project_key`: 可选，传入空间 ID 以限制在特定租户内搜索。
+- `query`: 必填，用户 ID、名称或邮箱
+- `project_key`: 可选，限定租户范围
 
-**返回**：`data` 字段为包含命中用户的数组（0 或 1 个元素，结构同 `get_users_by_ids`）。
+**返回**：`data` 字段为用户数组（0 或 1 个元素，结构同 `get_users_by_ids`）。
 
 ---
 
-### list_teams — 获取空间团队人员
+### get_teams — 获取空间团队人员
 
 获取空间下的团队列表。设置 `include_user_detail=true` 时自动调用 `get_users_by_ids` 补充用户详情。
 
 ```json
 {
-  "action": "list_teams",
+  "action": "get_teams",
   "project_key": "openclaw",
   "include_user_detail": true
 }
@@ -531,16 +545,17 @@ description: |
 
 ### 更新业务线
 
-1. `list_businesses` 获取空间下业务线列表 → 找到目标 ID
+1. `get_businesses` 获取空间下业务线列表 → 找到目标 ID
 2. `get_work_item` 读取当前值
 3. `update_work_item_field`（`field_key=business`，`field_value=业务线ID`）
 4. `get_work_item` 回读验证
 
 ### 管理评论
 
-1. `list_work_item_comments` 查看现有评论
-2. `create_work_item_comment` 添加新评论
-3. `delete_work_item_comment` 删除评论（需提供 `comment_id`）
+1. `get_comments` 查看现有评论
+2. `create_comment` 添加新评论
+3. `update_comment` 更新评论（需提供 `comment_id` 和新 `content`）
+4. `delete_comment` 删除评论（需提供 `comment_id`）
 
 ### 修改角色人员
 
@@ -563,9 +578,10 @@ description: |
 
 ### 查询用户与团队
 
-1. 已有 `id` → `get_users_by_ids` 获取用户详情（姓名、邮箱等）
-2. 查看空间团队 → `list_teams` 返回团队列表及用户详情
-3. `list_teams` 返回的 `user_details` 已自动填充，无需额外调用 `get_users_by_ids`
+1. 只有名称或邮箱 → `get_user`（精确匹配单个用户）
+2. 已有 `id` → `get_user` 或 `get_users_by_ids`（批量查询用户详情）
+3. 查看空间团队 → `get_teams` 返回团队列表及用户详情
+4. `get_teams` 返回的 `user_details` 已自动填充，无需额外调用 `get_users_by_ids`
 
 ## 插件配置
 

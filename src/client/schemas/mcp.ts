@@ -65,7 +65,7 @@ export interface SearchByMqlResult {
   extra_info: unknown;
 }
 
-// ── listSchedule 响应类型 ───────────────────────────────
+// ── getSchedule 响应类型 ───────────────────────────────
 
 /** 排期用户信息 */
 export interface ScheduleUserInfo {
@@ -139,8 +139,8 @@ export interface UserWorkload {
   unscheduled_tasks_hidden_count: number;
 }
 
-/** listSchedule 返回结果 */
-export interface ListScheduleResult {
+/** getSchedule 返回结果 */
+export interface GetScheduleResult {
   /** 用户工作量列表 */
   user_workload_list: UserWorkload[];
   /** 总用户数 */

@@ -4,12 +4,13 @@ import type {
   LarkProjectClientOptions,
   WorkItemLocator,
   Comment,
-  CreateWorkItemCommentParams,
-  ListWorkItemCommentsParams,
-  DeleteWorkItemCommentParams,
+  CreateCommentParams,
+  GetCommentsParams,
+  UpdateCommentParams,
+  DeleteCommentParams,
   UpdateWorkItemFieldParams,
   UpdateWorkItemRoleOwnersParams,
-  ListBusinessesParams,
+  GetBusinessesParams,
   GetWorkItemWorkflowParams,
   ConfirmNodeParams,
   RollbackNodeParams,
@@ -19,19 +20,21 @@ import type {
   GetWorkItemParams,
   GetViewDetailParams,
   GetWorkItemSchemaParams,
-  ListTeamsParams,
+  GetTeamsParams,
   GetUsersByIdsParams,
+  GetUserParams,
   SearchUsersParams,
   UserDetail,
   TeamWithDetails,
   ViewDetail,
   WorkItem,
-  CreateWorkItemCommentResult,
-  ListWorkItemCommentsResult,
-  DeleteWorkItemCommentResult,
+  CreateCommentResult,
+  GetCommentsResult,
+  UpdateCommentResult,
+  DeleteCommentResult,
   UpdateWorkItemFieldResult,
   UpdateWorkItemRoleOwnersResult,
-  ListBusinessesResult,
+  GetBusinessesResult,
   GetWorkItemWorkflowResult,
   ConfirmNodeResult,
   RollbackNodeResult,
@@ -41,9 +44,49 @@ import type {
   GetWorkItemResult,
   GetViewDetailResult,
   GetWorkItemSchemaResult,
-  ListTeamsResult,
+  GetTeamsResult,
   LarkProjectResponse,
-} from "./types";
+} from "./schemas";
+import {
+  LarkProjectClientOptionsSchema,
+  CreateCommentParamsSchema,
+  CreateCommentResultSchema,
+  GetCommentsParamsSchema,
+  GetCommentsResultSchema,
+  UpdateCommentParamsSchema,
+  UpdateCommentResultSchema,
+  DeleteCommentParamsSchema,
+  DeleteCommentResultSchema,
+  UpdateWorkItemFieldParamsSchema,
+  UpdateWorkItemFieldResultSchema,
+  UpdateWorkItemRoleOwnersParamsSchema,
+  UpdateWorkItemRoleOwnersResultSchema,
+  GetBusinessesParamsSchema,
+  GetBusinessesResultSchema,
+  GetWorkItemWorkflowParamsSchema,
+  GetWorkItemWorkflowResultSchema,
+  ConfirmNodeParamsSchema,
+  ConfirmNodeResultSchema,
+  RollbackNodeParamsSchema,
+  RollbackNodeResultSchema,
+  ChangeStateParamsSchema,
+  ChangeStateResultSchema,
+  CreateWorkItemParamsSchema,
+  CreateWorkItemResultSchema,
+  AbortWorkItemParamsSchema,
+  AbortWorkItemResultSchema,
+  GetWorkItemParamsSchema,
+  GetWorkItemResultSchema,
+  GetViewDetailParamsSchema,
+  GetViewDetailResultSchema,
+  GetWorkItemSchemaParamsSchema,
+  GetWorkItemSchemaResultSchema,
+  GetTeamsParamsSchema,
+  GetTeamsResultSchema,
+  GetUsersByIdsParamsSchema,
+  GetUserParamsSchema,
+  SearchUsersParamsSchema,
+} from "./schemas";
 import url from "node:url";
 import { default as _ } from "lodash";
 
@@ -93,7 +136,7 @@ const BASE_URL = "https://project.feishu.cn";
  *   userKey: "7136000000000000676",
  * });
  *
- * await client.createWorkItemComment({
+ * await client.createComment({
  *   url: "https://project.feishu.cn/proj/story/detail/123",
  *   content: "这是一条评论",
  * });
@@ -109,23 +152,41 @@ export class LarkProjectClient {
   private readonly userCache = new UserCache();
 
   /** 通过用户名称或 key 获取用户（优先查缓存，未命中则调用搜索接口） */
-  async getUser(nameOrKey: string, project_key?: string): Promise<UserDetail | undefined> {
-    const cached = this.userCache.get(nameOrKey);
+  async getUser(params: GetUserParams): Promise<UserDetail | null> {
+    const validParams = GetUserParamsSchema.parse(params);
+    const cached = this.userCache.get(validParams.query);
     if (cached) {
       return cached;
     }
 
     try {
+      // 如果 query 是纯数字，优先通过 getUsersByIds 精确查找
+      if (/^\d+$/.test(validParams.query)) {
+        const resp = await this.getUsersByIds({ ids: [validParams.query] });
+        const users = resp.data || [];
+        if (users.length > 0) {
+          return users.find((u) => u.id === validParams.query) ?? null;
+        }
+      }
+
+      // 通过 searchUsers 模糊搜索，再精确匹配
       const resp = await this.searchUsers({
-        query: nameOrKey,
-        project_key,
+        query: validParams.query,
+        project_key: validParams.project_key,
       });
       // searchUsers 内部会自动将结果写入缓存
       const users = resp.data || [];
-      // 尝试精确匹配，否则返回第一条匹配结果
-      return users.find(u => u.id === nameOrKey || u.name === nameOrKey) ?? users[0];
+      // 精确匹配 id、name 或 email
+      return (
+        users.find(
+          (u) =>
+            u.id === validParams.query ||
+            u.name === validParams.query ||
+            u.email === validParams.query,
+        ) ?? null
+      );
     } catch (err) {
-      return undefined;
+      return null;
     }
   }
 
@@ -288,21 +349,26 @@ export class LarkProjectClient {
    * @returns API 响应体，`data` 字段为新评论 ID
    * @throws 当 `content` 为空时抛出异常
    */
-  async createWorkItemComment(
-    params: CreateWorkItemCommentParams,
-  ): Promise<CreateWorkItemCommentResult> {
+  async createComment(
+    params: CreateCommentParams,
+  ): Promise<CreateCommentResult> {
+    const validParams = CreateCommentParamsSchema.parse(params);
     const { projectKey, workItemTypeKey, workItemId } =
-      this.resolveWorkItem(params);
+      this.resolveWorkItem(validParams);
 
-    if (typeof params.content !== "string" || !params.content.trim()) {
+    if (
+      typeof validParams.content !== "string" ||
+      !validParams.content.trim()
+    ) {
       throw new Error("content 不能为空");
     }
 
-    return this.request({
+    const result = await this.request({
       method: "POST",
       path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/comment/create`,
-      body: { content: params.content },
+      body: { content: validParams.content },
     });
+    return CreateCommentResultSchema.parse(result);
   }
 
   /**
@@ -311,11 +377,10 @@ export class LarkProjectClient {
    * @param params - 工作项定位参数
    * @returns API 响应体，`data` 字段为评论数组
    */
-  async listWorkItemComments(
-    params: ListWorkItemCommentsParams,
-  ): Promise<ListWorkItemCommentsResult> {
+  async getComments(params: GetCommentsParams): Promise<GetCommentsResult> {
+    const validParams = GetCommentsParamsSchema.parse(params);
     const { projectKey, workItemTypeKey, workItemId } =
-      this.resolveWorkItem(params);
+      this.resolveWorkItem(validParams);
 
     const result = await this.request<any[]>({
       method: "GET",
@@ -325,20 +390,16 @@ export class LarkProjectClient {
     // 转换字段：移除冗余字段，operator → author.id，时间戳 → ISO
     if (Array.isArray(result.data)) {
       result.data = result.data.map(
-        ({
-          work_item_id,
-          work_item_type_key,
-          operator,
-          created_at,
-          ...rest
-        }) => ({
-          ...rest,
-          author: { id: operator, name: "" },
-          created_at:
-            typeof created_at === "number" && created_at > 0
-              ? new Date(created_at)
-              : created_at,
-        }),
+        ({ work_item_id, work_item_type_key, operator, ...rest }) => {
+          const is_mine = operator === this.userKey;
+          return {
+            ...rest,
+            author: { id: operator, name: "" },
+            is_mine,
+            can_update: is_mine,
+            can_delete: is_mine,
+          };
+        },
       ) as any;
 
       // 查询评论人的 name（利用缓存）
@@ -346,7 +407,12 @@ export class LarkProjectClient {
       if (userIds.length > 0) {
         try {
           const usersResult = await this.getUsersByIds({ ids: userIds });
-          const userMap = new Map(_.map(usersResult.data || [], (u: any): [string, string] => [u.id, u.name]));
+          const userMap = new Map(
+            _.map(usersResult.data || [], (u: any): [string, string] => [
+              u.id,
+              u.name,
+            ]),
+          );
           for (const comment of result.data as any[]) {
             comment.author.name = userMap.get(comment.author.id) ?? "";
           }
@@ -365,7 +431,7 @@ export class LarkProjectClient {
           const uniqueNames = _.uniq(_.map(matches, (m: string) => m.slice(1)));
           for (const name of uniqueNames) {
             mentionPromises.push(
-              this.getUser(name, projectKey)
+              this.getUser({ query: name, project_key: projectKey })
                 .then((user) => {
                   if (user) {
                     comment.mentions.push({
@@ -374,7 +440,7 @@ export class LarkProjectClient {
                     });
                   }
                 })
-                .catch(() => {})
+                .catch(() => {}),
             );
           }
         }
@@ -382,7 +448,42 @@ export class LarkProjectClient {
       await Promise.all(mentionPromises);
     }
 
-    return result as unknown as ListWorkItemCommentsResult;
+    return GetCommentsResultSchema.parse(result);
+  }
+
+  /**
+   * 更新工作项下的一条评论。
+   *
+   * @remarks
+   * 仅评论的原始创建人可执行更新操作。
+   *
+   * @param params - 工作项定位参数 + 评论 ID + 新内容
+   * @returns API 响应体
+   */
+  async updateComment(
+    params: UpdateCommentParams,
+  ): Promise<UpdateCommentResult> {
+    const validParams = UpdateCommentParamsSchema.parse(params);
+    const { projectKey, workItemTypeKey, workItemId } =
+      this.resolveWorkItem(validParams);
+
+    if (!validParams.comment_id) {
+      throw new Error("缺少 comment_id");
+    }
+    if (
+      typeof validParams.content !== "string" ||
+      !validParams.content.trim()
+    ) {
+      throw new Error("content 不能为空");
+    }
+
+    const result = await this.request<any>({
+      method: "PUT",
+      path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/comment/${validParams.comment_id}`,
+      body: { content: validParams.content },
+    });
+
+    return UpdateCommentResultSchema.parse(result);
   }
 
   /**
@@ -392,24 +493,26 @@ export class LarkProjectClient {
    * 仅评论的原始创建人可执行删除操作。
    *
    * @param params - 工作项定位参数 + 评论 ID
-   * @param params.comment_id - 要删除的评论 ID（可通过 {@link listWorkItemComments} 获取）
+   * @param params.comment_id - 要删除的评论 ID（可通过 {@link getComments} 获取）
    * @returns API 响应体
    * @throws 当 `comment_id` 为空时抛出异常
    */
-  async deleteWorkItemComment(
-    params: DeleteWorkItemCommentParams,
-  ): Promise<DeleteWorkItemCommentResult> {
+  async deleteComment(
+    params: DeleteCommentParams,
+  ): Promise<DeleteCommentResult> {
+    const validParams = DeleteCommentParamsSchema.parse(params);
     const { projectKey, workItemTypeKey, workItemId } =
-      this.resolveWorkItem(params);
+      this.resolveWorkItem(validParams);
 
-    if (!params.comment_id) {
+    if (!validParams.comment_id) {
       throw new Error("缺少 comment_id");
     }
 
-    return this.request({
+    const result = await this.request({
       method: "DELETE",
-      path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/comment/${params.comment_id}`,
+      path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/comment/${validParams.comment_id}`,
     });
+    return DeleteCommentResultSchema.parse(result);
   }
 
   /**
@@ -424,26 +527,28 @@ export class LarkProjectClient {
    * @returns API 响应体
    * @throws 当 `update_fields` 为空时抛出异常
    */
-  async updateWorkItemField(
+  async updateWorkItem(
     params: UpdateWorkItemFieldParams,
   ): Promise<UpdateWorkItemFieldResult> {
+    const validParams = UpdateWorkItemFieldParamsSchema.parse(params);
     const { projectKey, workItemTypeKey, workItemId } =
-      this.resolveWorkItem(params);
+      this.resolveWorkItem(validParams);
 
     if (
-      !Array.isArray(params.update_fields) ||
-      params.update_fields.length === 0
+      !Array.isArray(validParams.update_fields) ||
+      validParams.update_fields.length === 0
     ) {
       throw new Error("update_fields 不能为空");
     }
 
-    return this.request({
+    const result = await this.request({
       method: "PUT",
       path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}`,
       body: {
-        update_fields: params.update_fields,
+        update_fields: validParams.update_fields,
       },
     });
+    return UpdateWorkItemFieldResultSchema.parse(result);
   }
 
   /**
@@ -461,25 +566,30 @@ export class LarkProjectClient {
   async updateWorkItemRoleOwners(
     params: UpdateWorkItemRoleOwnersParams,
   ): Promise<UpdateWorkItemRoleOwnersResult> {
+    const validParams = UpdateWorkItemRoleOwnersParamsSchema.parse(params);
     const { projectKey, workItemTypeKey, workItemId } =
-      this.resolveWorkItem(params);
+      this.resolveWorkItem(validParams);
 
-    if (!Array.isArray(params.role_owners) || params.role_owners.length === 0) {
+    if (
+      !Array.isArray(validParams.role_owners) ||
+      validParams.role_owners.length === 0
+    ) {
       throw new Error("role_owners 不能为空");
     }
 
-    return this.request({
+    const result = await this.request({
       method: "PUT",
       path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}`,
       body: {
         update_fields: [
           {
             field_key: "role_owners",
-            field_value: params.role_owners,
+            field_value: validParams.role_owners,
           },
         ],
       },
     });
+    return UpdateWorkItemRoleOwnersResultSchema.parse(result);
   }
 
   /**
@@ -492,17 +602,19 @@ export class LarkProjectClient {
    * @param params - 包含 project_key 的参数
    * @returns API 响应体，`data` 字段为业务线数组
    */
-  async listBusinesses(
-    params: ListBusinessesParams,
-  ): Promise<ListBusinessesResult> {
-    if (!params.project_key) {
+  async getBusinesses(
+    params: GetBusinessesParams,
+  ): Promise<GetBusinessesResult> {
+    const validParams = GetBusinessesParamsSchema.parse(params);
+    if (!validParams.project_key) {
       throw new Error("缺少 project_key");
     }
 
-    return this.request({
+    const result = await this.request({
       method: "GET",
-      path: `/open_api/${params.project_key}/business/all`,
+      path: `/open_api/${validParams.project_key}/business/all`,
     });
+    return GetBusinessesResultSchema.parse(result);
   }
 
   /**
@@ -515,18 +627,20 @@ export class LarkProjectClient {
    * @param params - 工作项定位参数
    * @returns API 响应体，包含工作流节点信息
    */
-  async getWorkItemWorkflow(
+  async getWorkflow(
     params: GetWorkItemWorkflowParams,
   ): Promise<GetWorkItemWorkflowResult> {
+    const validParams = GetWorkItemWorkflowParamsSchema.parse(params);
     const { projectKey, workItemTypeKey, workItemId } =
-      this.resolveWorkItem(params);
+      this.resolveWorkItem(validParams);
 
     // 先尝试节点流 /workflow/query (flow_type 默认 0)
     try {
-      return await this.request({
+      const result = await this.request({
         method: "POST",
         path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/workflow/query`,
       });
+      return GetWorkItemWorkflowResultSchema.parse(result);
     } catch (err: any) {
       // 状态流会返回 20026 FlowType Is Error
       const isStateFlow = err?.message?.includes("20026");
@@ -534,11 +648,12 @@ export class LarkProjectClient {
     }
 
     // 状态流：flow_type=1
-    return this.request({
+    const result = await this.request({
       method: "POST",
       path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/workflow/query`,
       body: { flow_type: 1 },
     });
+    return GetWorkItemWorkflowResultSchema.parse(result);
   }
 
   /**
@@ -554,24 +669,28 @@ export class LarkProjectClient {
    * @throws 当缺少 node_id 时抛出异常
    */
   async confirmNode(params: ConfirmNodeParams): Promise<ConfirmNodeResult> {
+    const validParams = ConfirmNodeParamsSchema.parse(params);
     const { projectKey, workItemTypeKey, workItemId } =
-      this.resolveWorkItem(params);
+      this.resolveWorkItem(validParams);
 
-    if (!params.node_id) {
+    if (!validParams.node_id) {
       throw new Error("缺少 node_id");
     }
 
     const body: Record<string, unknown> = { action: "confirm" };
-    if (params.node_owners) body.node_owners = params.node_owners;
-    if (params.node_schedule) body.node_schedule = params.node_schedule;
-    if (params.fields) body.fields = params.fields;
-    if (params.role_assignee) body.role_assignee = params.role_assignee;
+    if (validParams.node_owners) body.node_owners = validParams.node_owners;
+    if (validParams.node_schedule)
+      body.node_schedule = validParams.node_schedule;
+    if (validParams.fields) body.fields = validParams.fields;
+    if (validParams.role_assignee)
+      body.role_assignee = validParams.role_assignee;
 
-    return this.request({
+    const result = await this.request({
       method: "POST",
-      path: `/open_api/${projectKey}/workflow/${workItemTypeKey}/${workItemId}/node/${params.node_id}/operate`,
+      path: `/open_api/${projectKey}/workflow/${workItemTypeKey}/${workItemId}/node/${validParams.node_id}/operate`,
       body,
     });
+    return ConfirmNodeResultSchema.parse(result);
   }
 
   /**
@@ -587,24 +706,26 @@ export class LarkProjectClient {
    * @throws 当缺少 node_id 或 rollback_reason 时抛出异常
    */
   async rollbackNode(params: RollbackNodeParams): Promise<RollbackNodeResult> {
+    const validParams = RollbackNodeParamsSchema.parse(params);
     const { projectKey, workItemTypeKey, workItemId } =
-      this.resolveWorkItem(params);
+      this.resolveWorkItem(validParams);
 
-    if (!params.node_id) {
+    if (!validParams.node_id) {
       throw new Error("缺少 node_id");
     }
-    if (!params.rollback_reason) {
+    if (!validParams.rollback_reason) {
       throw new Error("缺少 rollback_reason");
     }
 
-    return this.request({
+    const result = await this.request({
       method: "POST",
-      path: `/open_api/${projectKey}/workflow/${workItemTypeKey}/${workItemId}/node/${params.node_id}/operate`,
+      path: `/open_api/${projectKey}/workflow/${workItemTypeKey}/${workItemId}/node/${validParams.node_id}/operate`,
       body: {
         action: "rollback",
-        rollback_reason: params.rollback_reason,
+        rollback_reason: validParams.rollback_reason,
       },
     });
+    return RollbackNodeResultSchema.parse(result);
   }
 
   /**
@@ -620,24 +741,26 @@ export class LarkProjectClient {
    * @throws 当缺少 transition_id 时抛出异常
    */
   async changeState(params: ChangeStateParams): Promise<ChangeStateResult> {
+    const validParams = ChangeStateParamsSchema.parse(params);
     const { projectKey, workItemTypeKey, workItemId } =
-      this.resolveWorkItem(params);
+      this.resolveWorkItem(validParams);
 
-    if (!params.transition_id) {
+    if (!validParams.transition_id) {
       throw new Error("缺少 transition_id");
     }
 
     const body: Record<string, unknown> = {
-      transition_id: Number(params.transition_id),
+      transition_id: Number(validParams.transition_id),
     };
-    if (params.fields) body.fields = params.fields;
-    if (params.role_owners) body.role_owners = params.role_owners;
+    if (validParams.fields) body.fields = validParams.fields;
+    if (validParams.role_owners) body.role_owners = validParams.role_owners;
 
-    return this.request({
+    const result = await this.request({
       method: "POST",
       path: `/open_api/${projectKey}/workflow/${workItemTypeKey}/${workItemId}/node/state_change`,
       body,
     });
+    return ChangeStateResultSchema.parse(result);
   }
 
   /**
@@ -652,11 +775,12 @@ export class LarkProjectClient {
   async createWorkItem(
     params: CreateWorkItemParams,
   ): Promise<CreateWorkItemResult> {
-    const parsed = parseWorkItemUrl(params.url);
-    const projectKey = params.project_key || parsed.project_key;
+    const validParams = CreateWorkItemParamsSchema.parse(params);
+    const parsed = parseWorkItemUrl(validParams.url);
+    const projectKey = validParams.project_key || parsed.project_key;
     const workItemTypeKey =
-      params.work_item_type ||
-      params.work_item_type_key ||
+      validParams.work_item_type ||
+      validParams.work_item_type_key ||
       parsed.work_item_type;
 
     if (!projectKey) {
@@ -666,8 +790,8 @@ export class LarkProjectClient {
       throw new Error("缺少 work_item_type_key");
     }
 
-    let name = params.name;
-    const fields = params.field_value_pairs || [];
+    let name = validParams.name;
+    const fields = validParams.field_value_pairs || [];
 
     if (!name) {
       const nameField = fields.find((f: any) => f.field_key === "name");
@@ -694,15 +818,16 @@ export class LarkProjectClient {
       }));
     }
 
-    if (params.template_id) {
-      body.template_id = params.template_id;
+    if (validParams.template_id) {
+      body.template_id = validParams.template_id;
     }
 
-    return this.request({
+    const result = await this.request({
       method: "POST",
       path: `/open_api/${projectKey}/work_item/create`,
       body,
     });
+    return CreateWorkItemResultSchema.parse(result);
   }
 
   /**
@@ -720,18 +845,20 @@ export class LarkProjectClient {
   async abortWorkItem(
     params: AbortWorkItemParams,
   ): Promise<AbortWorkItemResult> {
+    const validParams = AbortWorkItemParamsSchema.parse(params);
     const { projectKey, workItemTypeKey, workItemId } =
-      this.resolveWorkItem(params);
+      this.resolveWorkItem(validParams);
 
-    return this.request({
+    const result = await this.request({
       method: "PUT",
       path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/abort`,
       body: {
-        is_aborted: params.is_aborted !== false,
-        reason: params.reason || "API 终止",
+        is_aborted: validParams.is_aborted !== false,
+        reason: validParams.reason || "API 终止",
         reason_option: "other",
       },
     });
+    return AbortWorkItemResultSchema.parse(result);
   }
 
   /**
@@ -744,36 +871,38 @@ export class LarkProjectClient {
    * @returns API 响应体，data 为工作项完整详情
    */
   async getWorkItem(params: GetWorkItemParams): Promise<GetWorkItemResult> {
-    if (!params.project_key) {
+    const validParams = GetWorkItemParamsSchema.parse(params);
+    if (!validParams.project_key) {
       throw new Error("缺少 project_key");
     }
-    if (!params.work_item_id) {
+    if (!validParams.work_item_id) {
       throw new Error("缺少 work_item_id");
     }
 
-    const typeKeys = params.work_item_type_key
-      ? [params.work_item_type_key]
+    const typeKeys = validParams.work_item_type_key
+      ? [validParams.work_item_type_key]
       : ["story", "issue", "bug", "ticket", "epic"];
 
     const filterRes = await this.request<WorkItem[]>({
       method: "POST",
-      path: `/open_api/${params.project_key}/work_item/filter`,
+      path: `/open_api/${validParams.project_key}/work_item/filter`,
       body: {
         work_item_type_keys: typeKeys,
-        work_item_ids: [Number(params.work_item_id)],
+        work_item_ids: [Number(validParams.work_item_id)],
         page_size: 1,
       },
     });
 
     const item = filterRes.data?.[0];
     if (!item) {
-      throw new Error(`工作项 ${params.work_item_id} 不存在`);
+      throw new Error(`工作项 ${validParams.work_item_id} 不存在`);
     }
 
-    return {
+    const result = {
       ...filterRes,
       data: item,
     } as GetWorkItemResult;
+    return GetWorkItemResultSchema.parse(result);
   }
 
   /**
@@ -793,20 +922,21 @@ export class LarkProjectClient {
   async getViewDetail(
     params: GetViewDetailParams,
   ): Promise<GetViewDetailResult> {
-    if (!params.project_key) {
+    const validParams = GetViewDetailParamsSchema.parse(params);
+    if (!validParams.project_key) {
       throw new Error("缺少 project_key");
     }
-    if (!params.view_id) {
+    if (!validParams.view_id) {
       throw new Error("缺少 view_id");
     }
 
     // Step 1: 获取视图元数据和工作项 ID 列表
     const viewRes = await this.request<ViewDetail>({
       method: "GET",
-      path: `/open_api/${params.project_key}/fix_view/${params.view_id}`,
+      path: `/open_api/${validParams.project_key}/fix_view/${validParams.view_id}`,
       query: {
-        page_num: params.page_num,
-        page_size: params.page_size,
+        page_num: validParams.page_num,
+        page_size: validParams.page_size,
       },
     });
 
@@ -822,7 +952,7 @@ export class LarkProjectClient {
         const batch = ids.slice(i, i + 200).map(Number);
         const filterRes = await this.request<WorkItem[]>({
           method: "POST",
-          path: `/open_api/${params.project_key}/work_item/filter`,
+          path: `/open_api/${validParams.project_key}/work_item/filter`,
           body: {
             work_item_type_keys: typeKeys,
             work_item_ids: batch,
@@ -836,7 +966,7 @@ export class LarkProjectClient {
       result.data.work_items = allItems;
     }
 
-    return result;
+    return GetViewDetailResultSchema.parse(result);
   }
 
   /**
@@ -854,10 +984,11 @@ export class LarkProjectClient {
   async getWorkItemSchema(
     params: GetWorkItemSchemaParams,
   ): Promise<GetWorkItemSchemaResult> {
-    if (!params.project_key) {
+    const validParams = GetWorkItemSchemaParamsSchema.parse(params);
+    if (!validParams.project_key) {
       throw new Error("缺少 project_key");
     }
-    if (!params.work_item_type_key) {
+    if (!validParams.work_item_type_key) {
       throw new Error("缺少 work_item_type_key");
     }
 
@@ -865,12 +996,12 @@ export class LarkProjectClient {
     const [fieldsRes, rolesRes] = await Promise.all([
       this.request<any[]>({
         method: "POST",
-        path: `/open_api/${params.project_key}/field/all`,
-        body: { work_item_type_key: params.work_item_type_key },
+        path: `/open_api/${validParams.project_key}/field/all`,
+        body: { work_item_type_key: validParams.work_item_type_key },
       }),
       this.request<any[]>({
         method: "GET",
-        path: `/open_api/${params.project_key}/flow_roles/${params.work_item_type_key}`,
+        path: `/open_api/${validParams.project_key}/flow_roles/${validParams.work_item_type_key}`,
       }),
     ]);
 
@@ -888,11 +1019,12 @@ export class LarkProjectClient {
       is_owner: r.is_owner ?? false,
     }));
 
-    return {
+    const result = {
       err_code: 0,
       err_msg: "",
       data: { fields, roles },
     };
+    return GetWorkItemSchemaResultSchema.parse(result);
   }
 
   /**
@@ -905,14 +1037,15 @@ export class LarkProjectClient {
   async getUsersByIds(
     params: GetUsersByIdsParams,
   ): Promise<LarkProjectResponse<UserDetail[]>> {
-    if (!params.ids?.length) {
+    const validParams = GetUsersByIdsParamsSchema.parse(params);
+    if (!validParams.ids?.length) {
       throw new Error("缺少 ids");
     }
 
     // 区分缓存命中和未命中的 ID
     const cached: UserDetail[] = [];
     const missing: string[] = [];
-    for (const id of params.ids) {
+    for (const id of validParams.ids) {
       const hit = this.userCache.get(id);
       if (hit) {
         cached.push(hit);
@@ -930,7 +1063,15 @@ export class LarkProjectClient {
       });
       for (const raw of result.data || []) {
         // 移除冗余字段，name.default → name
-        const { username, avatar_url, name_cn, name_en, name, user_key, ...rest } = raw;
+        const {
+          username,
+          avatar_url,
+          name_cn,
+          name_en,
+          name,
+          user_key,
+          ...rest
+        } = raw;
         const user: UserDetail = {
           ...rest,
           id: user_key,
@@ -941,12 +1082,15 @@ export class LarkProjectClient {
       }
     }
 
-    return {
+    const response = {
       data: cached,
       err_code: 0,
       err_msg: "",
       err: {},
     } as LarkProjectResponse<UserDetail[]>;
+    // UserDetail schemas are parsed here if necessary, but not rigidly mapped yet
+    // because GET logic requires generic LarkProjectResponse<UserDetail[]>
+    return response;
   }
 
   /**
@@ -963,7 +1107,8 @@ export class LarkProjectClient {
   async searchUsers(
     params: SearchUsersParams,
   ): Promise<LarkProjectResponse<UserDetail[]>> {
-    if (!params.query?.trim()) {
+    const validParams = SearchUsersParamsSchema.parse(params);
+    if (!validParams.query?.trim()) {
       throw new Error("缺少 query");
     }
 
@@ -971,14 +1116,24 @@ export class LarkProjectClient {
       method: "POST",
       path: "/open_api/user/search",
       body: {
-        query: params.query,
-        ...(params.project_key ? { project_key: params.project_key } : {}),
+        query: validParams.query,
+        ...(validParams.project_key
+          ? { project_key: validParams.project_key }
+          : {}),
       },
     });
 
     const users: UserDetail[] = [];
     for (const raw of result.data || []) {
-      const { username, avatar_url, name_cn, name_en, name, user_key, ...rest } = raw;
+      const {
+        username,
+        avatar_url,
+        name_cn,
+        name_en,
+        name,
+        user_key,
+        ...rest
+      } = raw;
       const user: UserDetail = {
         ...rest,
         id: user_key,
@@ -988,12 +1143,13 @@ export class LarkProjectClient {
       users.push(user);
     }
 
-    return {
+    const response = {
       data: users,
       err_code: 0,
       err_msg: "",
       err: {},
     } as LarkProjectResponse<UserDetail[]>;
+    return response;
   }
 
   /**
@@ -1010,34 +1166,37 @@ export class LarkProjectClient {
    * @param params.include_user_detail - 是否包含用户详情（默认 false）
    * @returns API 响应体，data 为团队信息数组
    */
-  async listTeams(params: ListTeamsParams): Promise<ListTeamsResult> {
-    if (!params.project_key) {
+  async getTeams(params: GetTeamsParams): Promise<GetTeamsResult> {
+    const validParams = GetTeamsParamsSchema.parse(params);
+    if (!validParams.project_key) {
       throw new Error("缺少 project_key");
     }
 
     // 1. 获取团队列表
     const teamsResult = (await this.request({
       method: "GET",
-      path: `/open_api/${params.project_key}/teams/all`,
+      path: `/open_api/${validParams.project_key}/teams/all`,
       query: {
-        offset: params.offset,
-        limit: params.limit,
+        offset: validParams.offset,
+        limit: validParams.limit,
       },
     })) as any;
 
     const rawTeams: any[] = teamsResult.data || [];
 
     // 2. 根据 need_user_detail 决定是否查询用户详情
-    const needDetail = params.include_user_detail === true; // 默认 false
+    const needDetail = validParams.include_user_detail === true; // 默认 false
     const userMap: Record<string, UserDetail> = {};
 
     if (needDetail && rawTeams.length > 0) {
       // 收集所有唯一的 user_id
-      const allUserIds = _.uniq(_.flatMap(rawTeams, (team: any) => [
-        ...(team.user_keys || []),
-        ...(team.administrators || []),
-        ...(team.members || [])
-      ]));
+      const allUserIds = _.uniq(
+        _.flatMap(rawTeams, (team: any) => [
+          ...(team.user_keys || []),
+          ...(team.administrators || []),
+          ...(team.members || []),
+        ]),
+      );
 
       // 批量查询用户详情（每次最多 100 个）
       const chunks = _.chunk(allUserIds, 100);
@@ -1072,12 +1231,13 @@ export class LarkProjectClient {
       };
     });
 
-    return {
+    const result = {
       data: teamsWithDetails,
       has_more: teamsResult.has_more ?? false,
       err_code: teamsResult.err_code ?? 0,
       err_msg: teamsResult.err_msg ?? "",
       err: teamsResult.err ?? {},
     };
+    return GetTeamsResultSchema.parse(result);
   }
 }

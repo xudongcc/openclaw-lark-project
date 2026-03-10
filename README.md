@@ -20,11 +20,11 @@
                ▼                    ▼
      飞书项目 OpenAPI          飞书项目 MCP Server
     (16 个 action)            (search_by_mql,
-                               list_schedule)
+                               get_schedule)
 ```
 
 - **LarkProjectClient**（OpenAPI SDK）：封装 `plugin_access_token` 鉴权，处理工作项 CRUD、字段更新、评论、工作流转等 16 个操作。
-- **LarkProjectMCPClient**（MCP SDK）：通过 Streamable HTTP 连接飞书项目 MCP Server，封装 `search_by_mql` 和 `list_schedule` 两个操作。
+- **LarkProjectMCPClient**（MCP SDK）：通过 Streamable HTTP 连接飞书项目 MCP Server，封装 `search_by_mql` 和 `get_schedule` 两个操作。
 
 ## 安装
 
@@ -60,15 +60,16 @@ openclaw plugins install openclaw-lark-project
 | ------------------------------ | ----------------------------------------- |
 | `update_work_item_field`       | 更新任意字段（优先级、描述、业务线等）    |
 | `update_work_item_role_owners` | 覆盖更新角色人员名单                      |
-| `list_businesses`              | 获取空间下业务线列表（用于获取业务线 ID） |
+| `get_businesses`              | 获取空间下业务线列表（用于获取业务线 ID） |
 
 ### 评论管理
 
 | Action                     | 说明           |
 | -------------------------- | -------------- |
-| `create_work_item_comment` | 添加纯文本评论 |
-| `list_work_item_comments`  | 查询评论列表   |
-| `delete_work_item_comment` | 删除指定评论   |
+| `create_comment` | 添加纯文本评论 |
+| `get_comments`  | 查询评论列表   |
+| `update_comment` | 更新指定评论   |
+| `delete_comment` | 删除指定评论   |
 
 ### 工作流转
 
@@ -85,7 +86,7 @@ openclaw plugins install openclaw-lark-project
 | ----------------- | ------------------------------------------ |
 | `get_view_detail` | 获取视图下的工作项列表及完整详情           |
 | `search_by_mql`   | 使用 MOQL 进行复杂条件查询，支持分页       |
-| `list_schedule`   | 查询多用户在指定时间区间的排期与工作量明细 |
+| `get_schedule`   | 查询多用户在指定时间区间的排期与工作量明细 |
 
 详细参数和使用范例请参考 [SKILL.md](./skills/lark-project/SKILL.md)。
 

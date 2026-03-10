@@ -1,6 +1,10 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import type { SearchByMqlParams, SearchByMqlResult, ListScheduleResult } from "./types";
+import type {
+  SearchByMqlParams,
+  SearchByMqlResult,
+  GetScheduleResult,
+} from "./schemas";
 
 export interface LarkProjectMCPClientOptions {
   /** MCP Server 的 mcpKey */
@@ -9,7 +13,7 @@ export interface LarkProjectMCPClientOptions {
   userKey: string;
 }
 
-export interface ListScheduleParams {
+export interface GetScheduleParams {
   /** 空间标识 */
   project_key: string;
   /** 开始时间，格式 2006-01-01 */
@@ -30,7 +34,7 @@ const BASE_URL = "https://project.feishu.cn/mcp_server/v1";
  *
  * @remarks
  * 通过 Streamable HTTP 连接飞书项目 MCP Server，
- * 封装 `search_by_mql` 和 `list_schedule` 两个 MCP 工具调用。
+ * 封装 `search_by_mql` 和 `get_schedule` 两个 MCP 工具调用。
  */
 export class LarkProjectMCPClient {
   private readonly mcpKey: string;
@@ -114,7 +118,7 @@ export class LarkProjectMCPClient {
     const args: Record<string, unknown> = {
       project_key: params.project_key,
     };
-    
+
     if (params.moql) {
       args.moql = params.moql;
     }
@@ -125,9 +129,7 @@ export class LarkProjectMCPClient {
     if (params.group_pagination_list) {
       args.group_pagination_list = params.group_pagination_list;
     } else if (params.page_num !== undefined) {
-      args.group_pagination_list = [
-        { page_num: params.page_num },
-      ];
+      args.group_pagination_list = [{ page_num: params.page_num }];
     }
 
     return this.callTool("search_by_mql", args) as Promise<SearchByMqlResult>;
@@ -139,7 +141,7 @@ export class LarkProjectMCPClient {
    * @param params - 查询参数
    * @returns MCP 工具返回的排期数据
    */
-  async listSchedule(params: ListScheduleParams): Promise<ListScheduleResult> {
+  async getSchedule(params: GetScheduleParams): Promise<GetScheduleResult> {
     if (!params.project_key) {
       throw new Error("缺少 project_key");
     }
@@ -163,7 +165,7 @@ export class LarkProjectMCPClient {
       args.work_item_type_keys = params.work_item_type_keys;
     }
 
-    return this.callTool("list_schedule", args) as Promise<ListScheduleResult>;
+    return this.callTool("list_schedule", args) as Promise<GetScheduleResult>;
   }
 
   /**

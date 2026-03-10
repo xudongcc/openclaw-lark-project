@@ -1,5 +1,5 @@
 import { TTLCache } from "@isaacs/ttlcache";
-import type { UserDetail } from "./types";
+import type { UserDetail } from "./schemas";
 
 export class UserCache extends TTLCache<string, UserDetail> {
   constructor() {

@@ -42,43 +42,43 @@ describe.skipIf(skip)("LarkProjectClient", () => {
   describe("URL parsing", () => {
     it("should resolve params from URL", async () => {
       const url = `https://project.feishu.cn/${PROJECT_KEY}/${WORK_ITEM_TYPE}/detail/${workItemId}`;
-      const result = await client.listWorkItemComments({ url });
+      const result = await client.getComments({ url });
       expect(result.err_code).toBe(0);
     });
 
     it("should throw when project_key is missing", async () => {
       await expect(
-        client.listWorkItemComments({
+        client.getComments({
           work_item_type: WORK_ITEM_TYPE,
           work_item_id: workItemId,
         }),
-      ).rejects.toThrow("缺少 project_key");
+      ).rejects.toThrow(/project_key/);
     });
 
     it("should throw when work_item_type is missing", async () => {
       await expect(
-        client.listWorkItemComments({
+        client.getComments({
           project_key: PROJECT_KEY,
           work_item_id: workItemId,
         }),
-      ).rejects.toThrow("缺少 work_item_type");
+      ).rejects.toThrow(/work_item_type/);
     });
 
     it("should throw when work_item_id is missing", async () => {
       await expect(
-        client.listWorkItemComments({
+        client.getComments({
           project_key: PROJECT_KEY,
           work_item_type: WORK_ITEM_TYPE,
         }),
-      ).rejects.toThrow("缺少 work_item_id");
+      ).rejects.toThrow(/work_item_id/);
     });
   });
 
-  // ── 描述更新（通过 updateWorkItemField） ─────────────────
+  // ── 描述更新（通过 updateWorkItem） ─────────────────
 
-  describe("updateDescription via updateWorkItemField", () => {
+  describe("updateDescription via updateWorkItem", () => {
     it("should update description field", async () => {
-      const result = await client.updateWorkItemField({
+      const result = await client.updateWorkItem({
         project_key: PROJECT_KEY,
         work_item_type: WORK_ITEM_TYPE,
         work_item_id: workItemId,
@@ -101,17 +101,17 @@ describe.skipIf(skip)("LarkProjectClient", () => {
 
     it("should throw when content is empty", async () => {
       await expect(
-        client.createWorkItemComment({
+        client.createComment({
           project_key: PROJECT_KEY,
           work_item_type: WORK_ITEM_TYPE,
           work_item_id: workItemId,
           content: "",
         }),
-      ).rejects.toThrow("content 不能为空");
+      ).rejects.toThrow(/content/);
     });
 
     it("should create a comment", async () => {
-      const result = await client.createWorkItemComment({
+      const result = await client.createComment({
         project_key: PROJECT_KEY,
         work_item_type: WORK_ITEM_TYPE,
         work_item_id: workItemId,
@@ -123,8 +123,8 @@ describe.skipIf(skip)("LarkProjectClient", () => {
       expect(createdCommentId).toBeTruthy();
     });
 
-    it("should list comments and find the created one", async () => {
-      const result = await client.listWorkItemComments({
+    it("should get comments and find the created one", async () => {
+      const result = await client.getComments({
         project_key: PROJECT_KEY,
         work_item_type: WORK_ITEM_TYPE,
         work_item_id: workItemId,
@@ -133,25 +133,60 @@ describe.skipIf(skip)("LarkProjectClient", () => {
       expect(result.err_code).toBe(0);
       expect(Array.isArray(result.data)).toBe(true);
 
-      const found = result.data.some(
+      const found = result.data.find(
         (c: any) => String(c.id) === createdCommentId,
       );
-      expect(found).toBe(true);
+      expect(found).toBeTruthy();
+
+      // 验证时间字段已被转换为 Date
+      if (found) {
+        expect(found.created_at).toBeInstanceOf(Date);
+        // 验证权限字段（当前用户创建的评论）
+        expect(found.is_mine).toBe(true);
+        expect(found.can_update).toBe(true);
+        expect(found.can_delete).toBe(true);
+      }
+    });
+
+    it("should update the created comment", async () => {
+      const newContent = `[测试更新] ${new Date().toISOString()}`;
+      const result = await client.updateComment({
+        project_key: PROJECT_KEY,
+        work_item_type: WORK_ITEM_TYPE,
+        work_item_id: workItemId,
+        comment_id: createdCommentId,
+        content: newContent,
+      });
+
+      expect(result.err_code).toBe(0);
+      expect(result.data).toBeDefined();
+
+      // The open API for updating comment returns an empty data object { "data": {} }
+      // So we fetch it again to verify the update.
+      const commentsRes = await client.getComments({
+        project_key: PROJECT_KEY,
+        work_item_type: WORK_ITEM_TYPE,
+        work_item_id: workItemId,
+      });
+      const updated = commentsRes.data?.find(
+        (c: any) => String(c.id) === createdCommentId,
+      );
+      expect(updated?.content).toContain("[测试更新]");
     });
 
     it("should throw when comment_id is missing", async () => {
       await expect(
-        client.deleteWorkItemComment({
+        client.deleteComment({
           project_key: PROJECT_KEY,
           work_item_type: WORK_ITEM_TYPE,
           work_item_id: workItemId,
           comment_id: "",
         }),
-      ).rejects.toThrow("缺少 comment_id");
+      ).rejects.toThrow(/comment_id/);
     });
 
     it("should delete the comment", async () => {
-      const result = await client.deleteWorkItemComment({
+      const result = await client.deleteComment({
         project_key: PROJECT_KEY,
         work_item_type: WORK_ITEM_TYPE,
         work_item_id: workItemId,
@@ -162,7 +197,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
     });
 
     it("should confirm comment was deleted", async () => {
-      const result = await client.listWorkItemComments({
+      const result = await client.getComments({
         project_key: PROJECT_KEY,
         work_item_type: WORK_ITEM_TYPE,
         work_item_id: workItemId,
@@ -186,7 +221,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
           work_item_id: workItemId,
           role_owners: [],
         }),
-      ).rejects.toThrow("role_owners 不能为空");
+      ).rejects.toThrow(/role_owners/);
     });
 
     it("should update role owners", async () => {
@@ -226,15 +261,15 @@ describe.skipIf(skip)("LarkProjectClient", () => {
 
   // ── 业务线 ──────────────────────────────────────────
 
-  describe("listBusinesses", () => {
+  describe("getBusinesses", () => {
     it("should throw when project_key is empty", async () => {
-      await expect(client.listBusinesses({ project_key: "" })).rejects.toThrow(
+      await expect(client.getBusinesses({ project_key: "" })).rejects.toThrow(
         "缺少 project_key",
       );
     });
 
     it("should list businesses for the project", async () => {
-      const result = await client.listBusinesses({
+      const result = await client.getBusinesses({
         project_key: PROJECT_KEY,
       });
 
@@ -248,21 +283,21 @@ describe.skipIf(skip)("LarkProjectClient", () => {
 
   // ── 通用字段更新（业务线） ─────────────────────────────
 
-  describe("updateWorkItemField", () => {
+  describe("updateWorkItem", () => {
     it("should throw when update_fields is empty", async () => {
       await expect(
-        client.updateWorkItemField({
+        client.updateWorkItem({
           project_key: PROJECT_KEY,
           work_item_type: WORK_ITEM_TYPE,
           work_item_id: workItemId,
           update_fields: [],
         }),
-      ).rejects.toThrow("update_fields 不能为空");
+      ).rejects.toThrow(/update_fields/);
     });
 
     it("should update business field", async () => {
       // 先获取业务线列表，找到第一个业务线 ID
-      const bizResult = await client.listBusinesses({
+      const bizResult = await client.getBusinesses({
         project_key: PROJECT_KEY,
       });
 
@@ -275,7 +310,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
       const targetBizId = String(businesses[0].id);
       console.log(`使用业务线: ${businesses[0].name} (${targetBizId})`);
 
-      const result = await client.updateWorkItemField({
+      const result = await client.updateWorkItem({
         project_key: PROJECT_KEY,
         work_item_type: WORK_ITEM_TYPE,
         work_item_id: workItemId,
@@ -293,9 +328,9 @@ describe.skipIf(skip)("LarkProjectClient", () => {
 
   // ── 获取工作流详情 ────────────────────────────────────
 
-  describe("getWorkItemWorkflow", () => {
+  describe("getWorkflow", () => {
     it("should get workflow details", async () => {
-      const result = await client.getWorkItemWorkflow({
+      const result = await client.getWorkflow({
         project_key: PROJECT_KEY,
         work_item_type: WORK_ITEM_TYPE,
         work_item_id: workItemId,
@@ -318,7 +353,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
           work_item_id: workItemId,
           node_id: "",
         }),
-      ).rejects.toThrow("缺少 node_id");
+      ).rejects.toThrow(/node_id/);
     });
   });
 
@@ -334,7 +369,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
           node_id: "",
           rollback_reason: "test",
         }),
-      ).rejects.toThrow("缺少 node_id");
+      ).rejects.toThrow(/node_id/);
     });
 
     it("should throw when rollback_reason is missing", async () => {
@@ -346,7 +381,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
           node_id: "some_node",
           rollback_reason: "",
         }),
-      ).rejects.toThrow("缺少 rollback_reason");
+      ).rejects.toThrow(/rollback_reason/);
     });
   });
 
@@ -366,7 +401,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
 
       try {
         // 2. 获取工作流详情
-        const wf = await client.getWorkItemWorkflow({
+        const wf = await client.getWorkflow({
           project_key: PROJECT_KEY,
           work_item_type: WORK_ITEM_TYPE,
           work_item_id: tempWorkItemId,
@@ -454,7 +489,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
           url: ISSUE_URL,
           transition_id: "",
         }),
-      ).rejects.toThrow("缺少 transition_id");
+      ).rejects.toThrow(/transition_id/);
     });
 
     it("should perform state change and revert (e2e)", async () => {
@@ -472,7 +507,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
         const TEMP_ISSUE_URL = `https://project.feishu.cn/${PROJECT_KEY}/issue/detail/${tempIssueId}`;
 
         // 2. 获取工作流详情（状态流）
-        const wf = await client.getWorkItemWorkflow({ url: TEMP_ISSUE_URL });
+        const wf = await client.getWorkflow({ url: TEMP_ISSUE_URL });
 
         expect(wf.err_code).toBe(0);
 
@@ -517,7 +552,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
         console.log(`状态流转成功 → ${targetState}`);
 
         // 尝试流转回原状态
-        const wf2 = await client.getWorkItemWorkflow({ url: TEMP_ISSUE_URL });
+        const wf2 = await client.getWorkflow({ url: TEMP_ISSUE_URL });
         const reverseConnections = wf2.data?.connections || [];
         const reverseTransition = reverseConnections.find(
           (c: any) =>
@@ -559,7 +594,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
           work_item_type_key: "story",
           name: "test",
         }),
-      ).rejects.toThrow("缺少 project_key");
+      ).rejects.toThrow(/project_key/);
     });
 
     it("should throw when work_item_type_key is missing", async () => {
@@ -569,7 +604,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
           work_item_type_key: "",
           name: "test",
         }),
-      ).rejects.toThrow("缺少 work_item_type_key");
+      ).rejects.toThrow(/work_item_type_key/);
     });
 
     it("should throw when name is missing", async () => {
@@ -579,7 +614,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
           work_item_type_key: "story",
           name: "",
         }),
-      ).rejects.toThrow("缺少 name");
+      ).rejects.toThrow(/name/);
     });
   });
 
@@ -604,7 +639,9 @@ describe.skipIf(skip)("LarkProjectClient", () => {
 
       expect(result.err_code).toBe(0);
       createdWorkItemId = String(result.data);
-      console.log(`创建工作项成功(含优先级): ${WORK_ITEM_TYPE}/${createdWorkItemId}`);
+      console.log(
+        `创建工作项成功(含优先级): ${WORK_ITEM_TYPE}/${createdWorkItemId}`,
+      );
     });
 
     it("should abort the created work item", async () => {
@@ -657,13 +694,13 @@ describe.skipIf(skip)("LarkProjectClient", () => {
     it("should throw when project_key is empty", async () => {
       await expect(
         client.getViewDetail({ project_key: "", view_id: "test" }),
-      ).rejects.toThrow("缺少 project_key");
+      ).rejects.toThrow(/project_key/);
     });
 
     it("should throw when view_id is empty", async () => {
       await expect(
         client.getViewDetail({ project_key: PROJECT_KEY, view_id: "" }),
-      ).rejects.toThrow("缺少 view_id");
+      ).rejects.toThrow(/view_id/);
     });
 
     it("should get view detail with valid view_id (e2e)", async () => {
@@ -690,10 +727,15 @@ describe.skipIf(skip)("LarkProjectClient", () => {
       expect(firstItem.name).toBeTruthy();
       expect(firstItem.work_item_type_key).toBeTruthy();
       expect(Array.isArray(firstItem.fields)).toBe(true);
-      expect(firstItem.fields.length).toBeGreaterThan(0);
+      expect(firstItem.fields!.length).toBeGreaterThan(0);
       console.log(
-        `视图详情: ${result.data.name}, 工作项数: ${result.pagination.total}, 首个: ${firstItem.name}, 字段数: ${firstItem.fields.length}`,
+        `视图详情: ${result.data.name}, 工作项数: ${result.pagination.total}, 首个: ${firstItem.name}, 字段数: ${firstItem.fields!.length}`,
       );
+
+      // 验证时间字段已被转换为 Date
+      expect(result.data.created_at).toBeInstanceOf(Date);
+      expect(firstItem.created_at).toBeInstanceOf(Date);
+      expect(firstItem.updated_at).toBeInstanceOf(Date);
     });
   });
 
@@ -701,13 +743,13 @@ describe.skipIf(skip)("LarkProjectClient", () => {
     it("should throw when project_key is empty", async () => {
       await expect(
         client.getWorkItem({ project_key: "", work_item_id: "123" }),
-      ).rejects.toThrow("缺少 project_key");
+      ).rejects.toThrow(/project_key/);
     });
 
     it("should throw when work_item_id is empty", async () => {
       await expect(
         client.getWorkItem({ project_key: PROJECT_KEY, work_item_id: "" }),
-      ).rejects.toThrow("缺少 work_item_id");
+      ).rejects.toThrow(/work_item_id/);
     });
 
     it("should get work item detail (e2e)", async () => {
@@ -722,10 +764,15 @@ describe.skipIf(skip)("LarkProjectClient", () => {
       expect(result.data.name).toBeTruthy();
       expect(result.data.work_item_type_key).toBe(WORK_ITEM_TYPE);
       expect(Array.isArray(result.data.fields)).toBe(true);
-      expect(result.data.fields.length).toBeGreaterThan(0);
+      expect(result.data.fields!.length).toBeGreaterThan(0);
       expect(result.data.current_nodes).toBeDefined();
+
+      // 验证时间字段已被转换为 Date
+      expect(result.data.created_at).toBeInstanceOf(Date);
+      expect(result.data.updated_at).toBeInstanceOf(Date);
+
       console.log(
-        `工作项: ${result.data.name}, 类型: ${result.data.work_item_type_key}, 字段数: ${result.data.fields.length}`,
+        `工作项: ${result.data.name}, 类型: ${result.data.work_item_type_key}, 字段数: ${result.data.fields!.length}`,
       );
     });
   });
@@ -735,14 +782,20 @@ describe.skipIf(skip)("LarkProjectClient", () => {
   describe("getWorkItemSchema", () => {
     it("should throw when project_key is empty", async () => {
       await expect(
-        client.getWorkItemSchema({ project_key: "", work_item_type_key: "story" }),
-      ).rejects.toThrow("缺少 project_key");
+        client.getWorkItemSchema({
+          project_key: "",
+          work_item_type_key: "story",
+        }),
+      ).rejects.toThrow(/project_key/);
     });
 
     it("should throw when work_item_type_key is empty", async () => {
       await expect(
-        client.getWorkItemSchema({ project_key: PROJECT_KEY, work_item_type_key: "" }),
-      ).rejects.toThrow("缺少 work_item_type_key");
+        client.getWorkItemSchema({
+          project_key: PROJECT_KEY,
+          work_item_type_key: "",
+        }),
+      ).rejects.toThrow(/work_item_type_key/);
     });
 
     it("should get fields and roles for story (e2e)", async () => {
@@ -792,17 +845,17 @@ describe.skipIf(skip)("LarkProjectClient", () => {
 
   // ── 空间团队人员查询 ──────────────────────────────────
 
-  describe("listTeams", () => {
+  describe("getTeams", () => {
     it("should throw when project_key is empty", async () => {
       await expect(
-        client.listTeams({
+        client.getTeams({
           project_key: "",
         }),
-      ).rejects.toThrow("缺少 project_key");
+      ).rejects.toThrow(/project_key/);
     });
 
     it("should list teams (e2e)", async () => {
-      const result = await client.listTeams({
+      const result = await client.getTeams({
         project_key: PROJECT_KEY,
         limit: 10,
       });
@@ -823,6 +876,55 @@ describe.skipIf(skip)("LarkProjectClient", () => {
           `团队: ${team.team_name} (id: ${team.team_id}), 人员: ${team.user_ids.length}`,
         );
       }
+    });
+  });
+
+  // ── 获取单个用户 ──────────────────────────────────────
+
+  describe("getUser", () => {
+    it("should throw when query is empty", async () => {
+      await expect(
+        client.getUser({ query: "" }),
+      ).rejects.toThrow();
+    });
+
+    it("should find user by id (e2e)", async () => {
+      const user = await client.getUser({ query: USER_KEY });
+
+      expect(user).not.toBeNull();
+      expect(user!.id).toBe(USER_KEY);
+      expect(user!.name).toBeTruthy();
+      expect(user!.email).toBeTruthy();
+      console.log(`用户(by id): ${user!.name} (${user!.id}), email: ${user!.email}`);
+    });
+
+    it("should find user by name (e2e)", async () => {
+      // 先通过 id 获取名称
+      const byId = await client.getUser({ query: USER_KEY });
+      expect(byId).not.toBeNull();
+
+      const user = await client.getUser({ query: byId!.name });
+
+      expect(user).not.toBeNull();
+      expect(user!.name).toBe(byId!.name);
+      console.log(`用户(by name): ${user!.name} (${user!.id})`);
+    });
+
+    it("should return null for non-existent user", async () => {
+      const user = await client.getUser({ query: "不存在的用户_99999" });
+
+      expect(user).toBeNull();
+    });
+
+    it("should use cache on second call", async () => {
+      // 第一次调用
+      const user1 = await client.getUser({ query: USER_KEY });
+      expect(user1).not.toBeNull();
+
+      // 第二次调用应命中缓存（无网络请求）
+      const user2 = await client.getUser({ query: USER_KEY });
+      expect(user2).not.toBeNull();
+      expect(user2!.id).toBe(user1!.id);
     });
   });
 });
