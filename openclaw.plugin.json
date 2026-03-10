@@ -10,22 +10,18 @@
     "properties": {
       "pluginId": {
         "type": "string",
-        "minLength": 1,
         "title": "Plugin ID"
       },
       "pluginSecret": {
         "type": "string",
-        "minLength": 1,
         "title": "Plugin Secret"
       },
       "mcpKey": {
         "type": "string",
-        "minLength": 1,
         "title": "MCP Key"
       },
       "userKey": {
         "type": "string",
-        "minLength": 1,
         "title": "User Key"
       }
     }
