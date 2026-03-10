@@ -2,6 +2,7 @@ import JSONBigInt from "json-bigint";
 import type {
   LarkProjectClientOptions,
   WorkItemLocator,
+  Comment,
   CreateWorkItemCommentParams,
   ListWorkItemCommentsParams,
   DeleteWorkItemCommentParams,
@@ -283,10 +284,21 @@ export class LarkProjectClient {
     const { projectKey, workItemTypeKey, workItemId } =
       this.resolveWorkItem(params);
 
-    return this.request({
+    const result = await this.request<Comment[]>({
       method: "GET",
       path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/comments`,
     });
+
+    // 将 created_at 毫秒时间戳转为 ISO 时间字符串，方便 LLM 理解
+    if (Array.isArray(result.data)) {
+      for (const comment of result.data) {
+        if (typeof comment.created_at === "number" && comment.created_at > 0) {
+          comment.created_at = new Date(comment.created_at);
+        }
+      }
+    }
+
+    return result;
   }
 
   /**

@@ -103,16 +103,6 @@ export interface WorkItem {
 
 // ── 工作项操作参数 ──────────────────────────────────────
 
-export interface CreateWorkItemCommentParams extends WorkItemLocator {
-  content: string;
-}
-
-export interface ListWorkItemCommentsParams extends WorkItemLocator {}
-
-export interface DeleteWorkItemCommentParams extends WorkItemLocator {
-  comment_id: string;
-}
-
 export interface UpdateWorkItemFieldParams extends WorkItemLocator {
   update_fields: { field_key: string; field_value: unknown }[];
 }
@@ -170,9 +160,7 @@ export interface GetWorkItemSchemaParams {
 
 // ── 工作项操作结果 ──────────────────────────────────────
 
-export type CreateWorkItemCommentResult = LarkProjectResponse<number | string>;
-export type ListWorkItemCommentsResult = LarkProjectResponse<any[]>;
-export type DeleteWorkItemCommentResult = LarkProjectResponse<unknown>;
+
 export type UpdateWorkItemFieldResult = LarkProjectResponse<unknown>;
 export type UpdateWorkItemRoleOwnersResult = LarkProjectResponse<unknown>;
 export type ListBusinessesResult = LarkProjectResponse<any[]>;
