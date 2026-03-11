@@ -129,7 +129,7 @@ export const UpdateWorkItemParamsSchema = WorkItemLocatorSchema.extend({
         field_key: z
           .string()
           .describe(
-            '字段 key，如 "description"、"priority"、"business"。可通过 get_work_item_schema 获取可用字段列表',
+            '字段 key，如 "description"、"priority"、"business"。可通过 lark_project_work_item_schema_get 获取可用字段列表',
           ),
         field_value: z
           .any()
@@ -143,7 +143,7 @@ export const UpdateWorkItemParamsSchema = WorkItemLocatorSchema.extend({
       '要更新的字段列表。示例：[{ "field_key": "priority", "field_value": { "label": "P0", "value": "0" } }]',
     ),
 }).describe(
-  '更新工作项的任意字段（含描述、业务线、优先级等）。字段 key 和格式可通过 get_work_item_schema 获取。各类型 field_value 格式：单选（priority 等）→ { "label": "P0", "value": "0" }；业务线（business）→ 业务线 ID 字符串（非名称，通过 get_businesses 获取）；文本 → 字符串；数字 → 数值；人员 → id 字符串或数组；日期 → 毫秒时间戳；描述（description）→ markdown 字符串。',
+  '更新工作项的任意字段（含描述、业务线、优先级等）。字段 key 和格式可通过 lark_project_work_item_schema_get 获取。各类型 field_value 格式：单选（priority 等）→ { "label": "P0", "value": "0" }；业务线（business）→ 业务线 ID 字符串（非名称，通过 lark_project_business_list 获取）；文本 → 字符串；数字 → 数值；人员 → id 字符串或数组；日期 → 毫秒时间戳；描述（description）→ markdown 字符串。',
 );
 export type UpdateWorkItemParams = z.input<typeof UpdateWorkItemParamsSchema>;
 
@@ -155,7 +155,7 @@ export const UpdateWorkItemRoleOwnersParamsSchema =
           role: z
             .string()
             .describe(
-              '角色 ID（如 "rd"、"pm"、"qa"），可通过 get_work_item_schema 获取可用角色列表',
+              '角色 ID（如 "rd"、"pm"、"qa"），可通过 lark_project_work_item_schema_get 获取可用角色列表',
             ),
           owners: z
             .array(z.string())
@@ -167,7 +167,7 @@ export const UpdateWorkItemRoleOwnersParamsSchema =
         '角色人员数组（覆盖更新）。示例：[{ "role": "rd", "owners": ["7136000000000000676"] }]',
       ),
   }).describe(
-    "覆盖更新工作项的角色人员名单。⚠️ 这是覆盖更新，必须传入所有角色及其人员，未传入的角色人员会被清空。更新前应先通过 get_work_item 获取当前角色列表，角色 ID 可通过 get_work_item_schema 查询。",
+    "覆盖更新工作项的角色人员名单。⚠️ 这是覆盖更新，必须传入所有角色及其人员，未传入的角色人员会被清空。更新前应先通过 lark_project_work_item_get 获取当前角色列表，角色 ID 可通过 lark_project_work_item_schema_get 查询。",
   );
 export type UpdateWorkItemRoleOwnersParams = z.input<
   typeof UpdateWorkItemRoleOwnersParamsSchema
@@ -197,7 +197,7 @@ export const ConfirmNodeParamsSchema = WorkItemLocatorSchema.extend({
   node_id: z
     .string()
     .describe(
-      "目标节点 ID（即 workflow_nodes 中的 id/state_key），通过 get_workflow 获取",
+      "目标节点 ID（即 workflow_nodes 中的 id/state_key），通过 lark_project_workflow_get 获取",
     ),
   node_owners: z
     .array(z.string())
@@ -226,7 +226,7 @@ export const ConfirmNodeParamsSchema = WorkItemLocatorSchema.extend({
     .optional()
     .describe("流转时同步分配的角色负责人"),
 }).describe(
-  "【仅节点流】完成指定节点，将其从「已到达」（status=2）推进到「已通过」。使用前需先调用 get_workflow 获取 node_id。confirm 时建议传入 node_owners。可同时更新表单字段和角色负责人。",
+  "【仅节点流】完成指定节点，将其从「已到达」（status=2）推进到「已通过」。使用前需先调用 lark_project_workflow_get 获取 node_id。confirm 时建议传入 node_owners。可同时更新表单字段和角色负责人。",
 );
 export type ConfirmNodeParams = z.input<typeof ConfirmNodeParamsSchema>;
 
@@ -234,11 +234,11 @@ export const RollbackNodeParamsSchema = WorkItemLocatorSchema.extend({
   node_id: z
     .string()
     .describe(
-      "目标节点 ID（即 workflow_nodes 中的 id/state_key），通过 get_workflow 获取",
+      "目标节点 ID（即 workflow_nodes 中的 id/state_key），通过 lark_project_workflow_get 获取",
     ),
   rollback_reason: z.string().min(1).describe("回滚原因说明（必填）"),
 }).describe(
-  "【仅节点流】回滚指定节点，将已完成（status=3）的节点退回到「已到达」。使用前需先调用 get_workflow 获取 node_id。必须提供 rollback_reason。",
+  "【仅节点流】回滚指定节点，将已完成（status=3）的节点退回到「已到达」。使用前需先调用 lark_project_workflow_get 获取 node_id。必须提供 rollback_reason。",
 );
 export type RollbackNodeParams = z.input<typeof RollbackNodeParamsSchema>;
 
@@ -246,7 +246,7 @@ export const ChangeStateParamsSchema = WorkItemLocatorSchema.extend({
   transition_id: z
     .string()
     .describe(
-      "流转 ID，从 get_workflow 返回的 connections 数组中获取（匹配 source_state_key 为当前状态的记录）",
+      "流转 ID，从 lark_project_workflow_get 返回的 connections 数组中获取（匹配 source_state_key 为当前状态的记录）",
     ),
   fields: z
     .array(
@@ -267,7 +267,7 @@ export const ChangeStateParamsSchema = WorkItemLocatorSchema.extend({
     .optional()
     .describe("流转时同步设置的角色人员"),
 }).describe(
-  "【仅状态流】执行工作项状态流转。transition_id 需先通过 get_workflow 获取：从 state_flow_nodes 找到当前状态（status=2），再从 connections 找 source_state_key 匹配的 transition_id。可同时更新表单字段和角色人员。",
+  "【仅状态流】执行工作项状态流转。transition_id 需先通过 lark_project_workflow_get 获取：从 state_flow_nodes 找到当前状态（status=2），再从 connections 找 source_state_key 匹配的 transition_id。可同时更新表单字段和角色人员。",
 );
 export type ChangeStateParams = z.input<typeof ChangeStateParamsSchema>;
 

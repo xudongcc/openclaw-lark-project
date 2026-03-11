@@ -69,9 +69,9 @@ export const DeleteCommentParamsSchema = WorkItemLocatorSchema.extend({
   comment_id: z
     .string()
     .min(1)
-    .describe("要删除的评论 ID，通过 get_comments 返回的评论列表中获取"),
+    .describe("要删除的评论 ID，通过 lark_project_comment_list 返回的评论列表中获取"),
 }).describe(
-  "删除工作项下的指定评论。仅评论创建人有权删除。comment_id 可通过 get_comments 获取。",
+  "删除工作项下的指定评论。仅评论创建人有权删除。comment_id 可通过 lark_project_comment_list 获取。",
 );
 
 export type DeleteCommentParams = z.infer<typeof DeleteCommentParamsSchema>;
