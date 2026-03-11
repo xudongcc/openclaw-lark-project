@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.11.0...v1.11.1) (2026-03-11)
+
+
+### Bug Fixes
+
+* update stale tool name references in schema descriptions ([49d4925](https://github.com/xudongcc/openclaw-lark-project/commit/49d492566f6c696d9616fbe69019111ae2c4cb1f))
+
 # [1.11.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.10.1...v1.11.0) (2026-03-11)
 
 
