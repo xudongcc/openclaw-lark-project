@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.10.1...v1.11.0) (2026-03-11)
+
+
+### Features
+
+* 拆分工具以解决 LLM 对 JSONSchema 兼容问题。 ([36963bc](https://github.com/xudongcc/openclaw-lark-project/commit/36963bc8ef4063064022e7e652761198abe132cb))
+
 ## [1.10.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.10.0...v1.10.1) (2026-03-10)
 
 
