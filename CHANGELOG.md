@@ -1,3 +1,10 @@
+## [1.11.3](https://github.com/xudongcc/openclaw-lark-project/compare/v1.11.2...v1.11.3) (2026-03-11)
+
+
+### Bug Fixes
+
+* use draft-07 JSON Schema to avoid ajv compatibility error ([c6335c2](https://github.com/xudongcc/openclaw-lark-project/commit/c6335c29b5dc883da7d90500391d085e547f5840))
+
 ## [1.11.2](https://github.com/xudongcc/openclaw-lark-project/compare/v1.11.1...v1.11.2) (2026-03-11)
 
 
