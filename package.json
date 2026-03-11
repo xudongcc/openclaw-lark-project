@@ -5,6 +5,7 @@
   "type": "module",
   "license": "MIT",
   "files": [
+    "skills",
     "src",
     "!src/**/*.test.ts",
     "openclaw.plugin.json"
