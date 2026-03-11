@@ -8,7 +8,7 @@ import type {
   GetCommentsParams,
   UpdateCommentParams,
   DeleteCommentParams,
-  UpdateWorkItemFieldParams,
+  UpdateWorkItemParams,
   UpdateWorkItemRoleOwnersParams,
   GetBusinessesParams,
   GetWorkItemWorkflowParams,
@@ -57,7 +57,7 @@ import {
   UpdateCommentResultSchema,
   DeleteCommentParamsSchema,
   DeleteCommentResultSchema,
-  UpdateWorkItemFieldParamsSchema,
+  UpdateWorkItemParamsSchema,
   UpdateWorkItemFieldResultSchema,
   UpdateWorkItemRoleOwnersParamsSchema,
   UpdateWorkItemRoleOwnersResultSchema,
@@ -528,9 +528,9 @@ export class LarkProjectClient {
    * @throws 当 `update_fields` 为空时抛出异常
    */
   async updateWorkItem(
-    params: UpdateWorkItemFieldParams,
+    params: UpdateWorkItemParams,
   ): Promise<UpdateWorkItemFieldResult> {
-    const validParams = UpdateWorkItemFieldParamsSchema.parse(params);
+    const validParams = UpdateWorkItemParamsSchema.parse(params);
     const { projectKey, workItemTypeKey, workItemId } =
       this.resolveWorkItem(validParams);
 

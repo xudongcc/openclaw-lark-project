@@ -122,7 +122,7 @@ export type WorkItem = z.infer<typeof WorkItemSchema>;
 
 // ── 工作项操作参数 ──────────────────────────────────────
 
-export const UpdateWorkItemFieldParamsSchema = WorkItemLocatorSchema.extend({
+export const UpdateWorkItemParamsSchema = WorkItemLocatorSchema.extend({
   update_fields: z
     .array(
       z.object({
@@ -145,9 +145,7 @@ export const UpdateWorkItemFieldParamsSchema = WorkItemLocatorSchema.extend({
 }).describe(
   '更新工作项的任意字段（含描述、业务线、优先级等）。字段 key 和格式可通过 get_work_item_schema 获取。各类型 field_value 格式：单选（priority 等）→ { "label": "P0", "value": "0" }；业务线（business）→ 业务线 ID 字符串（非名称，通过 get_businesses 获取）；文本 → 字符串；数字 → 数值；人员 → id 字符串或数组；日期 → 毫秒时间戳；描述（description）→ markdown 字符串。',
 );
-export type UpdateWorkItemFieldParams = z.input<
-  typeof UpdateWorkItemFieldParamsSchema
->;
+export type UpdateWorkItemParams = z.input<typeof UpdateWorkItemParamsSchema>;
 
 export const UpdateWorkItemRoleOwnersParamsSchema =
   WorkItemLocatorSchema.extend({

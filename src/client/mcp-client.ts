@@ -3,6 +3,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import type {
   SearchByMqlParams,
   SearchByMqlResult,
+  GetScheduleParams,
   GetScheduleResult,
 } from "./schemas";
 
@@ -11,19 +12,6 @@ export interface LarkProjectMCPClientOptions {
   mcpKey: string;
   /** 用户标识 */
   userKey: string;
-}
-
-export interface GetScheduleParams {
-  /** 空间标识 */
-  project_key: string;
-  /** 开始时间，格式 2006-01-01 */
-  start_time: string;
-  /** 结束时间，格式 2006-01-01 */
-  end_time: string;
-  /** 用户标识列表（名称、邮箱或 user_id），最多 20 个 */
-  user_ids: string[];
-  /** 工作项类型标识列表，如 ["story", "issue"]，传 ["_all"] 查所有类型 */
-  work_item_type_keys?: string[];
 }
 
 /** @internal */
