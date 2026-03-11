@@ -1,3 +1,10 @@
+## [1.11.2](https://github.com/xudongcc/openclaw-lark-project/compare/v1.11.1...v1.11.2) (2026-03-11)
+
+
+### Bug Fixes
+
+* 修复没有打包 skills ([43837b0](https://github.com/xudongcc/openclaw-lark-project/commit/43837b04d7362a7fe48ce43941e0239a6b6f92b6))
+
 ## [1.11.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.11.0...v1.11.1) (2026-03-11)
 
 
