@@ -139,15 +139,15 @@ export class LarkProjectMCPClient {
     if (!params.end_time) {
       throw new Error("缺少 end_time");
     }
-    if (!Array.isArray(params.user_ids) || params.user_ids.length === 0) {
-      throw new Error("缺少 user_ids");
+    if (!Array.isArray(params.user_keys) || params.user_keys.length === 0) {
+      throw new Error("缺少 user_keys");
     }
 
     const args: Record<string, unknown> = {
       project_key: params.project_key,
       start_time: params.start_time,
       end_time: params.end_time,
-      user_keys: params.user_ids, // 这里传给服务端依然用 user_keys
+      user_keys: params.user_keys,
     };
     if (params.work_item_type_keys) {
       args.work_item_type_keys = params.work_item_type_keys;

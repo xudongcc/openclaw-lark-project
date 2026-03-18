@@ -29,7 +29,7 @@ import { GetViewDetailParamsSchema } from "./client/schemas/view";
 
 import {
   GetUserParamsSchema,
-  GetUsersByIdsParamsSchema,
+  GetUsersByUserKeysParamsSchema,
 } from "./client/schemas/user";
 
 import { GetTeamsParamsSchema } from "./client/schemas/team";
@@ -176,7 +176,7 @@ const larkProjectPlugin = {
         name: "lark_project_work_item_update",
         label: "lark_project_work_item_update",
         description:
-          '更新工作项的任意字段（含描述、业务线、优先级等）。字段 key 和格式可通过 lark_project_work_item_schema_get 获取。各类型 field_value 格式：单选（priority 等）→ { "label": "P0", "value": "0" }；业务线（business）→ 业务线 ID 字符串（非名称，通过 lark_project_business_list 获取）；文本 → 字符串；数字 → 数值；人员 → id 字符串或数组；日期 → 毫秒时间戳；描述（description）→ markdown 字符串。',
+          '更新工作项的任意字段（含描述、业务线、优先级等）。字段 key 和格式可通过 lark_project_work_item_schema_get 获取。各类型 field_value 格式：单选（priority 等）→ { "label": "P0", "value": "0" }；业务线（business）→ 业务线 ID 字符串（非名称，通过 lark_project_business_list 获取）；文本 → 字符串；数字 → 数值；人员 → user_key 字符串或数组；日期 → 毫秒时间戳；描述（description）→ markdown 字符串。',
         parameters: toJSONSchema(UpdateWorkItemParamsSchema),
         execute: async (_id: string, params: unknown) => {
           try {
@@ -466,13 +466,13 @@ const larkProjectPlugin = {
         name: "lark_project_user_list",
         label: "lark_project_user_list",
         description:
-          "批量查询用户详情。根据 id 列表获取用户的详细信息。每次最多查询 100 个用户。",
-        parameters: toJSONSchema(GetUsersByIdsParamsSchema),
+          "批量查询用户详情。根据 user_key 列表获取用户的详细信息。每次最多查询 100 个用户。",
+        parameters: toJSONSchema(GetUsersByUserKeysParamsSchema),
         execute: async (_id: string, params: unknown) => {
           try {
             return json(
-              await client.getUsersByIds(
-                GetUsersByIdsParamsSchema.parse(params),
+              await client.getUsersByUserKeys(
+                GetUsersByUserKeysParamsSchema.parse(params),
               ),
             );
           } catch (err: any) {

@@ -869,11 +869,11 @@ describe.skipIf(skip)("LarkProjectClient", () => {
         const team = result.data[0];
         expect(team.team_id).toBeTruthy();
         expect(team.team_name).toBeTruthy();
-        expect(Array.isArray(team.user_ids)).toBe(true);
+        expect(Array.isArray(team.user_keys)).toBe(true);
         expect(Array.isArray(team.administrators)).toBe(true);
         expect(Array.isArray(team.members)).toBe(true);
         console.log(
-          `团队: ${team.team_name} (id: ${team.team_id}), 人员: ${team.user_ids.length}`,
+          `团队: ${team.team_name} (id: ${team.team_id}), 人员: ${team.user_keys.length}`,
         );
       }
     });
@@ -896,7 +896,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
         expect(detailKeys.length).toBeGreaterThan(0);
 
         const firstUser = team.user_details[detailKeys[0]];
-        expect(firstUser.id).toBeTruthy();
+        expect(firstUser.user_key).toBeTruthy();
         expect(firstUser.name).toBeTruthy();
         console.log(
           `团队(含详情): ${team.team_name}, 用户详情数: ${detailKeys.length}, 首个: ${firstUser.name}`,
@@ -918,10 +918,10 @@ describe.skipIf(skip)("LarkProjectClient", () => {
       const user = await client.getUser({ query: USER_KEY });
 
       expect(user).not.toBeNull();
-      expect(user!.id).toBe(USER_KEY);
+      expect(user!.user_key).toBe(USER_KEY);
       expect(user!.name).toBeTruthy();
       expect(user!.email).toBeTruthy();
-      console.log(`用户(by id): ${user!.name} (${user!.id}), email: ${user!.email}`);
+      console.log(`用户(by id): ${user!.name} (${user!.user_key}), email: ${user!.email}`);
     });
 
     it("should find user by name (e2e)", async () => {
@@ -933,7 +933,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
 
       expect(user).not.toBeNull();
       expect(user!.name).toBe(byId!.name);
-      console.log(`用户(by name): ${user!.name} (${user!.id})`);
+      console.log(`用户(by name): ${user!.name} (${user!.user_key})`);
     });
 
     it("should return null for non-existent user", async () => {
@@ -950,7 +950,7 @@ describe.skipIf(skip)("LarkProjectClient", () => {
       // 第二次调用应命中缓存（无网络请求）
       const user2 = await client.getUser({ query: USER_KEY });
       expect(user2).not.toBeNull();
-      expect(user2!.id).toBe(user1!.id);
+      expect(user2!.user_key).toBe(user1!.user_key);
     });
   });
 });

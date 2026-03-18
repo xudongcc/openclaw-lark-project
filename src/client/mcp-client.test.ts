@@ -54,20 +54,20 @@ describe.skipIf(skip)("LarkProjectMCPClient", () => {
           project_key: "",
           start_time: "2026-03-01",
           end_time: "2024-02-01",
-          user_ids: [USER_KEY],
+          user_keys: [USER_KEY],
         }),
       ).rejects.toThrow("缺少 project_key");
     });
 
-    it("should throw when user_ids is empty", async () => {
+    it("should throw when user_keys is empty", async () => {
       await expect(
         client.getSchedule({
           project_key: PROJECT_KEY,
           start_time: "2024-01-01",
           end_time: "2024-02-01",
-          user_ids: [],
+          user_keys: [],
         }),
-      ).rejects.toThrow("缺少 user_ids");
+      ).rejects.toThrow("缺少 user_keys");
     });
 
     it("should query schedule data (e2e)", async () => {
@@ -75,7 +75,7 @@ describe.skipIf(skip)("LarkProjectMCPClient", () => {
         project_key: PROJECT_KEY,
         start_time: "2024-01-01",
         end_time: "2024-02-01",
-        user_ids: [USER_KEY],
+        user_keys: [USER_KEY],
         work_item_type_keys: ["_all"],
       });
 

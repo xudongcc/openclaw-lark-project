@@ -94,10 +94,10 @@ export const GetScheduleParamsSchema = z
       .describe(
         "传入查询排期的时间范围结束时间（最大不超过3个月），请严格按照以下格式输入：2006-01-01",
       ),
-    user_ids: z
+    user_keys: z
       .array(z.string())
       .describe(
-        "传入要查询排期的用户的唯一标识，支持输入名称、邮箱、id 或 user_id，支持传入多个，最多支持 20 个",
+        "传入要查询排期的用户的唯一标识，支持输入名称、邮箱或 user_key，支持传入多个，最多支持 20 个",
       ),
     work_item_type_keys: z
       .array(z.string())

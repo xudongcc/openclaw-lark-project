@@ -9,7 +9,7 @@ import {
 
 /** 评论中的用户基本信息 */
 export const CommentUserSchema = z.object({
-  id: z.string(),
+  user_key: z.string(),
   name: z.string(),
 });
 

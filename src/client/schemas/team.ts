@@ -40,7 +40,7 @@ export const GetTeamsParamsSchema = z
       ),
   })
   .describe(
-    "获取指定空间下的团队人员列表。返回团队 ID、团队名称、人员列表（user_ids）、管理员列表（administrators）、成员列表（members）。设置 include_user_detail=true 时自动查询用户详情，返回 user_details 映射（含 name_cn、email、avatar_url、status 等）。",
+    "获取指定空间下的团队人员列表。返回团队 ID、团队名称、人员列表（user_keys）、管理员列表（administrators）、成员列表（members）。设置 include_user_detail=true 时自动查询用户详情，返回 user_details 映射（含 name_cn、email、avatar_url、status 等）。",
   );
 
 export type GetTeamsParams = z.input<typeof GetTeamsParamsSchema>;
@@ -53,13 +53,13 @@ export const TeamWithDetailsSchema = z.object({
   team_id: z.string(),
   /** 团队名称 */
   team_name: z.string(),
-  /** 团队下的人员 user_id 列表 */
-  user_ids: z.array(z.string()),
-  /** 团队下的管理员 user_id 列表 */
+  /** 团队下的人员 user_key 列表 */
+  user_keys: z.array(z.string()),
+  /** 团队下的管理员 user_key 列表 */
   administrators: z.array(z.string()),
-  /** 团队下的成员 user_id 列表 */
+  /** 团队下的成员 user_key 列表 */
   members: z.array(z.string()),
-  /** 人员详情映射（user_id → 用户信息） */
+  /** 人员详情映射（user_key → 用户信息） */
   user_details: z.record(z.string(), UserDetailSchema),
 });
 

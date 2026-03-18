@@ -21,7 +21,7 @@ import type {
   GetViewDetailParams,
   GetWorkItemSchemaParams,
   GetTeamsParams,
-  GetUsersByIdsParams,
+  GetUsersByUserKeysParams,
   GetUserParams,
   SearchUsersParams,
   UserDetail,
@@ -83,7 +83,7 @@ import {
   GetWorkItemSchemaResultSchema,
   GetTeamsParamsSchema,
   GetTeamsResultSchema,
-  GetUsersByIdsParamsSchema,
+  GetUsersByUserKeysParamsSchema,
   GetUserParamsSchema,
   SearchUsersParamsSchema,
 } from "./schemas";
@@ -160,12 +160,12 @@ export class LarkProjectClient {
     }
 
     try {
-      // 如果 query 是纯数字，优先通过 getUsersByIds 精确查找
+      // 如果 query 是纯数字，优先通过 getUsersByUserKeys 精确查找
       if (/^\d+$/.test(validParams.query)) {
-        const resp = await this.getUsersByIds({ ids: [validParams.query] });
+        const resp = await this.getUsersByUserKeys({ user_keys: [validParams.query] });
         const users = resp.data || [];
         if (users.length > 0) {
-          return users.find((u) => u.id === validParams.query) ?? null;
+          return users.find((u) => u.user_key === validParams.query) ?? null;
         }
       }
 
@@ -180,7 +180,7 @@ export class LarkProjectClient {
       return (
         users.find(
           (u) =>
-            u.id === validParams.query ||
+            u.user_key === validParams.query ||
             u.name === validParams.query ||
             u.email === validParams.query,
         ) ?? null
@@ -387,14 +387,14 @@ export class LarkProjectClient {
       path: `/open_api/${projectKey}/work_item/${workItemTypeKey}/${workItemId}/comments`,
     });
 
-    // 转换字段：移除冗余字段，operator → author.id，时间戳 → ISO
+    // 转换字段：移除冗余字段，operator → author.user_key，时间戳 → ISO
     if (Array.isArray(result.data)) {
       result.data = result.data.map(
         ({ work_item_id, work_item_type_key, operator, ...rest }) => {
           const is_mine = operator === this.userKey;
           return {
             ...rest,
-            author: { id: operator, name: "" },
+            author: { user_key: operator, name: "" },
             is_mine,
             can_update: is_mine,
             can_delete: is_mine,
@@ -403,18 +403,18 @@ export class LarkProjectClient {
       ) as any;
 
       // 查询评论人的 name（利用缓存）
-      const userIds = _.compact(_.uniq(_.map(result.data, "author.id")));
+      const userIds = _.compact(_.uniq(_.map(result.data, "author.user_key")));
       if (userIds.length > 0) {
         try {
-          const usersResult = await this.getUsersByIds({ ids: userIds });
+          const usersResult = await this.getUsersByUserKeys({ user_keys: userIds });
           const userMap = new Map(
             _.map(usersResult.data || [], (u: any): [string, string] => [
-              u.id,
+              u.user_key,
               u.name,
             ]),
           );
           for (const comment of result.data as any[]) {
-            comment.author.name = userMap.get(comment.author.id) ?? "";
+            comment.author.name = userMap.get(comment.author.user_key) ?? "";
           }
         } catch {
           // 查询失败不影响评论返回
@@ -436,7 +436,7 @@ export class LarkProjectClient {
                   if (user) {
                     comment.mentions.push({
                       name: user.name,
-                      id: user.id,
+                      user_key: user.user_key,
                     });
                   }
                 })
@@ -559,7 +559,7 @@ export class LarkProjectClient {
    * **注意：这是覆盖更新**，调用时需传入所有角色及其人员，未传入的角色人员会被清空。
    *
    * @param params - 工作项定位参数 + 角色人员列表
-   * @param params.role_owners - 角色人员数组，每项包含 `role`（角色 ID）和 `owners`（id 列表）
+   * @param params.role_owners - 角色人员数组，每项包含 `role`（角色 ID）和 `owners`（user_key 列表）
    * @returns API 响应体
    * @throws 当 `role_owners` 为空时抛出异常
    */
@@ -1031,21 +1031,21 @@ export class LarkProjectClient {
    * 批量查询用户详情。
    *
    * @param params - 查询参数
-   * @param params.ids - id 列表（最多 100 个）
+   * @param params.user_keys - user_key 列表（最多 100 个）
    * @returns 用户详情数组
    */
-  async getUsersByIds(
-    params: GetUsersByIdsParams,
+  async getUsersByUserKeys(
+    params: GetUsersByUserKeysParams,
   ): Promise<LarkProjectResponse<UserDetail[]>> {
-    const validParams = GetUsersByIdsParamsSchema.parse(params);
-    if (!validParams.ids?.length) {
-      throw new Error("缺少 ids");
+    const validParams = GetUsersByUserKeysParamsSchema.parse(params);
+    if (!validParams.user_keys?.length) {
+      throw new Error("缺少 user_keys");
     }
 
     // 区分缓存命中和未命中的 ID
     const cached: UserDetail[] = [];
     const missing: string[] = [];
-    for (const id of validParams.ids) {
+    for (const id of validParams.user_keys) {
       const hit = this.userCache.get(id);
       if (hit) {
         cached.push(hit);
@@ -1074,10 +1074,10 @@ export class LarkProjectClient {
         } = raw;
         const user: UserDetail = {
           ...rest,
-          id: user_key,
+          user_key: user_key,
           name: name?.default ?? "",
         };
-        this.userCache.set(user.id, user);
+        this.userCache.set(user.user_key, user);
         cached.push(user);
       }
     }
@@ -1136,10 +1136,10 @@ export class LarkProjectClient {
       } = raw;
       const user: UserDetail = {
         ...rest,
-        id: user_key,
+        user_key: user_key,
         name: name?.default ?? "",
       };
-      this.userCache.set(user.id, user);
+      this.userCache.set(user.user_key, user);
       users.push(user);
     }
 
@@ -1189,7 +1189,7 @@ export class LarkProjectClient {
     const userMap: Record<string, UserDetail> = {};
 
     if (needDetail && rawTeams.length > 0) {
-      // 收集所有唯一的 user_id
+      // 收集所有唯一的 user_key
       const allUserIds = _.uniq(
         _.flatMap(rawTeams, (team: any) => [
           ...(team.user_keys || []),
@@ -1202,9 +1202,9 @@ export class LarkProjectClient {
       const chunks = _.chunk(allUserIds, 100);
       for (const batch of chunks) {
         try {
-          const usersResult = await this.getUsersByIds({ ids: batch });
+          const usersResult = await this.getUsersByUserKeys({ user_keys: batch });
           for (const user of usersResult.data || []) {
-            userMap[user.id] = user;
+            userMap[user.user_key] = user;
           }
         } catch {
           // 查询用户详情失败不影响团队列表返回
@@ -1224,7 +1224,7 @@ export class LarkProjectClient {
       return {
         team_id: team.team_id,
         team_name: team.team_name,
-        user_ids: team.user_keys || [],
+        user_keys: team.user_keys || [],
         administrators: team.administrators || [],
         members: team.members || [],
         user_details: userDetails,

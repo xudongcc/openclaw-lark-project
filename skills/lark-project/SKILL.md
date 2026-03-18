@@ -50,7 +50,7 @@ description: |
 }
 ```
 
-**返回**：`data` 字段为评论数组，每条包含 `id`、`author`（含 `id` 和 `name`）、`content`、`created_at`、`is_mine`、`can_update`、`can_delete`、`mentions`（可选）。
+**返回**：`data` 字段为评论数组，每条包含 `id`、`author`（含 `user_key` 和 `name`）、`content`、`created_at`、`is_mine`、`can_update`、`can_delete`、`mentions`（可选）。
 
 ---
 
@@ -123,8 +123,8 @@ description: |
 | 业务线（business）  | 业务线 ID 字符串（**必须传 ID，不能传名称**） | `"662f0e13b1a20d5dd5fb3320"`      |
 | 单行文本            | 字符串                                        | `"文本内容"`                      |
 | 数字                | 数值                                          | `11.11`                           |
-| 单选人员            | id 字符串                                     | `"7356795280xxx"`                 |
-| 多选人员            | id 字符串数组                                 | `["735xxx", "731xxx"]`            |
+| 单选人员            | user_key 字符串                               | `"7356795280xxx"`                 |
+| 多选人员            | user_key 字符串数组                           | `["735xxx", "731xxx"]`            |
 | 日期                | 毫秒时间戳                                    | `1722182400000`                   |
 | 描述（description） | markdown 字符串                               | `"# 标题\n内容"`                  |
 
@@ -352,34 +352,34 @@ description: |
   "project_key": "openclaw",
   "start_time": "2026-03-01",
   "end_time": "2026-03-31",
-  "user_ids": ["7136000000000000676"],
+  "user_keys": ["7136000000000000676"],
   "work_item_type_keys": ["_all"]
 }
 ```
 
 **返回**：`user_workload_list` + `total`。
 
-**约束**：时间范围最大 3 个月（格式 `YYYY-MM-DD`），`user_ids` 最多 20 个。
+**约束**：时间范围最大 3 个月（格式 `YYYY-MM-DD`），`user_keys` 最多 20 个。
 
 ---
 
 ### lark_project_user_list — 批量查询用户详情
 
-根据 id 列表查询用户详细信息。每次最多 100 个。
+根据 user_key 列表查询用户详细信息。每次最多 100 个。
 
 ```json
 {
-  "ids": ["7136000000000000676", "7136015608381980677"]
+  "user_keys": ["7136000000000000676", "7136015608381980677"]
 }
 ```
 
-**返回**：`data` 字段为用户详情数组，每项包含 `id`、`name`、`email`、`out_id`、`status`。
+**返回**：`data` 字段为用户详情数组，每项包含 `user_key`、`name`、`email`、`out_id`、`status`。
 
 ---
 
 ### lark_project_user_get — 获取单个用户
 
-通过 ID、名称或邮箱精确获取单个用户详情。
+通过 user_key、名称或邮箱精确获取单个用户详情。
 
 ```json
 {
@@ -387,7 +387,7 @@ description: |
 }
 ```
 
-- `query`: 必填，用户 ID、名称或邮箱
+- `query`: 必填，用户 user_key、名称或邮箱
 - `project_key`: 可选，限定租户范围
 
 **返回**：`data` 字段为用户数组（0 或 1 个元素）。
@@ -405,7 +405,7 @@ description: |
 }
 ```
 
-**返回**：`data` 字段为团队数组，每项包含 `team_id`、`team_name`、`user_ids`、`administrators`、`members`、`user_details`。
+**返回**：`data` 字段为团队数组，每项包含 `team_id`、`team_name`、`user_keys`、`administrators`、`members`、`user_details`。
 
 **可选参数**：`offset`（页码，从 0 开始）、`limit`（每页条数，最大 300）、`include_user_detail`（默认 false）。
 
@@ -456,7 +456,7 @@ description: |
 ### 查询用户与团队
 
 1. 只有名称或邮箱 → `lark_project_user_get`（精确匹配单个用户）
-2. 已有 `id` → `lark_project_user_get` 或 `lark_project_user_list`（批量查询）
+2. 已有 `user_key` → `lark_project_user_get` 或 `lark_project_user_list`（批量查询）
 3. 查看空间团队 → `lark_project_team_list`
 
 ## 插件配置
@@ -480,4 +480,4 @@ description: |
 | `Node Is Not Arrived`                      | 节点未到达（status≠2），无法操作                                   |
 | `Node Is Completed`                        | 节点已完成（status=3），无法再次完成                               |
 | `Required Field Is Not Set` (20038)        | 流转前必填字段未填写，先补充必填信息                               |
-| `User Not Found` (30006)                   | id 不正确；或使用虚拟 token 时只能查插件协作者                     |
+| `User Not Found` (30006)                   | user_key 不正确；或使用虚拟 token 时只能查插件协作者               |

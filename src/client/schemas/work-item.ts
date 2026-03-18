@@ -32,7 +32,7 @@ export const WorkItemNodeSchema = z.object({
   id: z.string(),
   /** 节点名称 */
   name: z.string(),
-  /** 负责人 id 列表 */
+  /** 负责人 user_key 列表 */
   owners: z.array(z.string()),
   /** 是否为里程碑节点 */
   milestone: z.boolean(),
@@ -135,7 +135,7 @@ export const UpdateWorkItemParamsSchema = WorkItemLocatorSchema.extend({
         field_value: z
           .any()
           .describe(
-            "字段值，格式随字段类型变化。单选传 {label, value} 对象；业务线传 ID 字符串；描述传 markdown 字符串；日期传毫秒时间戳；人员传 id 字符串或数组",
+            "字段值，格式随字段类型变化。单选传 {label, value} 对象；业务线传 ID 字符串；描述传 markdown 字符串；日期传毫秒时间戳；人员传 user_key 字符串或数组",
           ),
       }),
     )
@@ -144,7 +144,7 @@ export const UpdateWorkItemParamsSchema = WorkItemLocatorSchema.extend({
       '要更新的字段列表。示例：[{ "field_key": "priority", "field_value": { "label": "P0", "value": "0" } }]',
     ),
 }).describe(
-  '更新工作项的任意字段（含描述、业务线、优先级等）。字段 key 和格式可通过 lark_project_work_item_schema_get 获取。各类型 field_value 格式：单选（priority 等）→ { "label": "P0", "value": "0" }；业务线（business）→ 业务线 ID 字符串（非名称，通过 lark_project_business_list 获取）；文本 → 字符串；数字 → 数值；人员 → id 字符串或数组；日期 → 毫秒时间戳；描述（description）→ markdown 字符串。',
+  '更新工作项的任意字段（含描述、业务线、优先级等）。字段 key 和格式可通过 lark_project_work_item_schema_get 获取。各类型 field_value 格式：单选（priority 等）→ { "label": "P0", "value": "0" }；业务线（business）→ 业务线 ID 字符串（非名称，通过 lark_project_business_list 获取）；文本 → 字符串；数字 → 数值；人员 → user_key 字符串或数组；日期 → 毫秒时间戳；描述（description）→ markdown 字符串。',
 );
 export type UpdateWorkItemParams = z.input<typeof UpdateWorkItemParamsSchema>;
 
@@ -203,7 +203,7 @@ export const ConfirmNodeParamsSchema = WorkItemLocatorSchema.extend({
   node_owners: z
     .array(z.string())
     .optional()
-    .describe('节点负责人 id 列表，建议传入。如 ["7136000000000000676"]'),
+    .describe('节点负责人 user_key 列表，建议传入。如 ["7136000000000000676"]'),
   node_schedule: z
     .record(z.string(), z.unknown())
     .optional()
@@ -221,7 +221,7 @@ export const ConfirmNodeParamsSchema = WorkItemLocatorSchema.extend({
     .array(
       z.object({
         role: z.string().describe("角色 ID"),
-        owners: z.array(z.string()).describe("人员 id 列表"),
+        owners: z.array(z.string()).describe("人员 user_key 列表"),
       }),
     )
     .optional()
@@ -262,7 +262,7 @@ export const ChangeStateParamsSchema = WorkItemLocatorSchema.extend({
     .array(
       z.object({
         role: z.string().describe("角色 ID"),
-        owners: z.array(z.string()).describe("人员 id 列表"),
+        owners: z.array(z.string()).describe("人员 user_key 列表"),
       }),
     )
     .optional()
