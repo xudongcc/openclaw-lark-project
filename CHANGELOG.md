@@ -1,3 +1,10 @@
+## [1.12.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.12.0...v1.12.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* 统一用户标识为 user_key ([fb496b3](https://github.com/xudongcc/openclaw-lark-project/commit/fb496b33ca29b680ddcf095689eeef75e15ccaeb))
+
 # [1.12.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.11.3...v1.12.0) (2026-03-18)
 
 
