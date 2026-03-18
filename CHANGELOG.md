@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.11.3...v1.12.0) (2026-03-18)
+
+
+### Features
+
+* 将日期输出统一为带有本地时区偏移的 ISO 8601 格式 ([b8267eb](https://github.com/xudongcc/openclaw-lark-project/commit/b8267eb8b793e09c9d8e8a0e526e4e10d0328871))
+
 ## [1.11.3](https://github.com/xudongcc/openclaw-lark-project/compare/v1.11.2...v1.11.3) (2026-03-11)
 
 

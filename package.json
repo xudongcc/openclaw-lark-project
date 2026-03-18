@@ -1,6 +1,6 @@
 {
   "name": "openclaw-lark-project",
-  "version": "1.11.3",
+  "version": "1.12.0",
   "description": "OpenClaw plugin for Lark Project workitem description updates",
   "type": "module",
   "license": "MIT",
