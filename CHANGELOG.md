@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.12.1...v1.13.0) (2026-03-18)
+
+
+### Features
+
+* 注册 search_by_mql 工具并优化拆分技能文档 ([79502a3](https://github.com/xudongcc/openclaw-lark-project/commit/79502a34fecc1f03e083b49b51578c0c7e5cf0ff))
+
 ## [1.12.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.12.0...v1.12.1) (2026-03-18)
 
 
