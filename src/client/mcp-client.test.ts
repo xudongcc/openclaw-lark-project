@@ -43,6 +43,62 @@ describe.skipIf(skip)("LarkProjectMCPClient", () => {
       console.log("MOQL result:", JSON.stringify(result).slice(0, 500));
       expect(result).toBeDefined();
     });
+
+    it("should return data matching SearchByMqlResult shape (e2e)", async () => {
+      const result = await client.searchByMql({
+        project_key: PROJECT_KEY,
+        moql: `SELECT \`工作项id\`, \`需求名称\` FROM \`${PROJECT_KEY}\`.\`需求\` LIMIT 1`,
+      });
+
+      console.log(
+        "SearchByMqlResult full:",
+        JSON.stringify(result, null, 2).slice(0, 2000),
+      );
+
+      // ── 顶层字段 ─────────────────────────────────────
+      expect(result).toHaveProperty("list");
+      expect(result).toHaveProperty("session_id");
+      expect(result).toHaveProperty("data");
+      expect(Array.isArray(result.list)).toBe(true);
+      expect(typeof result.session_id).toBe("string");
+      expect(typeof result.data).toBe("object");
+
+      // ── list / MoqlGroup ──────────────────────────────
+      expect(result.list.length).toBeGreaterThanOrEqual(1);
+      const group = result.list[0];
+      expect(group).toHaveProperty("count");
+      expect(typeof group.count).toBe("number");
+      expect(group).toHaveProperty("group_infos");
+      expect(Array.isArray(group.group_infos)).toBe(true);
+
+      // ── group_infos / MoqlGroupInfo ───────────────────
+      const info = group.group_infos[0];
+      expect(info).toHaveProperty("group_name");
+      expect(info).toHaveProperty("group_id");
+      expect(typeof info.group_name).toBe("string");
+      expect(typeof info.group_id).toBe("string");
+
+      // ── data / MoqlRow[] ──────────────────────────────
+      const groupId = info.group_id;
+      const rows = result.data[groupId];
+      expect(Array.isArray(rows)).toBe(true);
+      expect(rows.length).toBeGreaterThanOrEqual(1);
+
+      const row = rows[0];
+      expect(row).toHaveProperty("moql_field_list");
+      expect(Array.isArray(row.moql_field_list)).toBe(true);
+
+      // ── moql_field_list / MoqlField ───────────────────
+      const field = row.moql_field_list[0];
+      expect(field).toHaveProperty("key");
+      expect(field).toHaveProperty("name");
+      expect(field).toHaveProperty("value_type");
+      expect(field).toHaveProperty("value");
+      expect(typeof field.key).toBe("string");
+      expect(typeof field.name).toBe("string");
+      expect(typeof field.value_type).toBe("string");
+      expect(typeof field.value).toBe("object");
+    });
   });
 
   // ── getSchedule ────────────────────────────────────

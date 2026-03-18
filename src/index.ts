@@ -33,7 +33,10 @@ import {
 } from "./client/schemas/user";
 
 import { GetTeamsParamsSchema } from "./client/schemas/team";
-import { GetScheduleParamsSchema } from "./client/schemas/mcp";
+import {
+  GetScheduleParamsSchema,
+  SearchByMqlParamsSchema,
+} from "./client/schemas/mcp";
 
 // ── 插件配置 ──
 
@@ -411,6 +414,28 @@ const larkProjectPlugin = {
     );
 
     // ── Data Query ──
+
+    api.registerTool(
+      {
+        name: "lark_project_search_by_mql",
+        label: "lark_project_search_by_mql",
+        description:
+          "使用 MOQL（类 SQL）语法查询飞书项目工作项。支持按字段筛选、排序、分页，适用于批量检索需求、缺陷等。语法详见参数 moql 的说明。",
+        parameters: toJSONSchema(SearchByMqlParamsSchema),
+        execute: async (_id: string, params: unknown) => {
+          try {
+            return json(
+              await mcpClient.searchByMql(
+                SearchByMqlParamsSchema.parse(params),
+              ),
+            );
+          } catch (err: any) {
+            return json({ error: err?.message || String(err) });
+          }
+        },
+      },
+      { optional: true },
+    );
 
     api.registerTool(
       {
