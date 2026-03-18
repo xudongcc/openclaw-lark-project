@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { dateFormat } from "../utils/date-format";
 
 /**
  * Options for initializing a `LarkProjectClient` client.
@@ -68,7 +69,7 @@ export const PaginationSchema = z.object({
 
 export type Pagination = z.infer<typeof PaginationSchema>;
 
-/** 毫秒时间戳 → Date，0 或 falsy → null */
+/** 毫秒时间戳 → ISO 8601 带时区字符串，0 或 falsy → null */
 export const msToDate = z
   .number()
-  .transform((v) => (v > 0 ? new Date(v) : null));
+  .transform((v) => (v > 0 ? dateFormat(new Date(v)) : null));

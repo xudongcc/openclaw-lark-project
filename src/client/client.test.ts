@@ -138,9 +138,9 @@ describe.skipIf(skip)("LarkProjectClient", () => {
       );
       expect(found).toBeTruthy();
 
-      // 验证时间字段已被转换为 Date
+      // 验证时间字段已被转换为 ISO 8601 带时区字符串
       if (found) {
-        expect(found.created_at).toBeInstanceOf(Date);
+        expect(typeof found.created_at).toBe("string");
         // 验证权限字段（当前用户创建的评论）
         expect(found.is_mine).toBe(true);
         expect(found.can_update).toBe(true);
@@ -732,10 +732,10 @@ describe.skipIf(skip)("LarkProjectClient", () => {
         `视图详情: ${result.data.name}, 工作项数: ${result.pagination.total}, 首个: ${firstItem.name}, 字段数: ${firstItem.fields!.length}`,
       );
 
-      // 验证时间字段已被转换为 Date
-      expect(result.data.created_at).toBeInstanceOf(Date);
-      expect(firstItem.created_at).toBeInstanceOf(Date);
-      expect(firstItem.updated_at).toBeInstanceOf(Date);
+      // 验证时间字段已被转换为 ISO 8601 带时区字符串
+      expect(typeof result.data.created_at).toBe("string");
+      expect(typeof firstItem.created_at).toBe("string");
+      expect(typeof firstItem.updated_at).toBe("string");
     });
   });
 
@@ -767,9 +767,9 @@ describe.skipIf(skip)("LarkProjectClient", () => {
       expect(result.data.fields!.length).toBeGreaterThan(0);
       expect(result.data.current_nodes).toBeDefined();
 
-      // 验证时间字段已被转换为 Date
-      expect(result.data.created_at).toBeInstanceOf(Date);
-      expect(result.data.updated_at).toBeInstanceOf(Date);
+      // 验证时间字段已被转换为 ISO 8601 带时区字符串
+      expect(typeof result.data.created_at).toBe("string");
+      expect(typeof result.data.updated_at).toBe("string");
 
       console.log(
         `工作项: ${result.data.name}, 类型: ${result.data.work_item_type_key}, 字段数: ${result.data.fields!.length}`,

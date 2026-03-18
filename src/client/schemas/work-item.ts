@@ -6,6 +6,7 @@ import {
   msToDate,
 } from "./common";
 import type { WorkItemLocator } from "./common";
+import { dateFormat } from "../utils/date-format";
 
 // ── 工作项实体类型 ──────────────────────────────────────
 
@@ -103,7 +104,7 @@ export const WorkItemSchema = z.object({
   /** 最后修改人 id */
   updated_by: z.string(),
   /** 最后修改时间戳（毫秒） */
-  updated_at: z.coerce.date(),
+  updated_at: z.coerce.number().transform((v) => (v > 0 ? dateFormat(new Date(v)) : null)),
   /** 删除人 id，空字符串表示未删除 */
   deleted_by: z.string(),
   /** 删除时间戳（毫秒），0 表示未删除 */
