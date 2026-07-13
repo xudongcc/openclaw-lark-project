@@ -3,6 +3,31 @@
   "name": "Lark Project",
   "entry": "./src/index.ts",
   "skills": ["./skills"],
+  "contracts": {
+    "tools": [
+      "lark_project_work_item_create",
+      "lark_project_work_item_abort",
+      "lark_project_work_item_get",
+      "lark_project_work_item_schema_get",
+      "lark_project_work_item_update",
+      "lark_project_work_item_role_update",
+      "lark_project_view_get",
+      "lark_project_workflow_get",
+      "lark_project_node_confirm",
+      "lark_project_node_rollback",
+      "lark_project_state_change",
+      "lark_project_comment_create",
+      "lark_project_comment_list",
+      "lark_project_comment_update",
+      "lark_project_comment_delete",
+      "lark_project_search_by_mql",
+      "lark_project_schedule_get",
+      "lark_project_user_get",
+      "lark_project_user_list",
+      "lark_project_team_list",
+      "lark_project_business_list"
+    ]
+  },
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
