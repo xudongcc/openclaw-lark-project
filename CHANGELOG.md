@@ -1,3 +1,11 @@
+## [1.13.2](https://github.com/xudongcc/openclaw-lark-project/compare/v1.13.1...v1.13.2) (2026-07-13)
+
+
+### Bug Fixes
+
+* declare compiled OpenClaw runtime entry ([fbf9460](https://github.com/xudongcc/openclaw-lark-project/commit/fbf94608434f18d3059ac44db17a9bfd66e3d0ae))
+* publish compiled ESM runtime ([451460d](https://github.com/xudongcc/openclaw-lark-project/commit/451460d26b63e28dfa910e70c9a1326e0199c3d9))
+
 ## [1.13.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.13.0...v1.13.1) (2026-07-13)
 
 
