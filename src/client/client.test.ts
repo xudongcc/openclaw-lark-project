@@ -8,7 +8,7 @@ const USER_KEY = process.env.LARK_PROJECT_USER_KEY!;
 
 const skip = !PLUGIN_ID || !PLUGIN_SECRET || !PROJECT_KEY || !USER_KEY;
 
-describe.skipIf(skip)("LarkProjectClient", () => {
+describe.skipIf(skip)("LarkProjectClient", { timeout: 20_000 }, () => {
   let client: LarkProjectClient;
   const WORK_ITEM_TYPE = process.env.LARK_WORK_ITEM_TYPE || "story";
   let workItemId: string;

@@ -7,7 +7,7 @@ const PROJECT_KEY = process.env.LARK_PROJECT_PROJECT_KEY!;
 
 const skip = !MCP_KEY || !USER_KEY || !PROJECT_KEY;
 
-describe.skipIf(skip)("LarkProjectMCPClient", () => {
+describe.skipIf(skip)("LarkProjectMCPClient", { timeout: 20_000 }, () => {
   let client: LarkProjectMCPClient;
 
   client = new LarkProjectMCPClient({
