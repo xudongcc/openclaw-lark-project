@@ -367,7 +367,10 @@ pnpm install --frozen-lockfile
 pnpm exec tsc --noEmit
 pnpm build
 pnpm test
-pnpm pack --dry-run --json
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+pnpm --silent pack --pack-destination "$tmp"
+tar -tzf "$tmp"/*.tgz
 git diff --check
 ```
 
