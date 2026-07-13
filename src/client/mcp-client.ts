@@ -5,7 +5,7 @@ import type {
   SearchByMqlResult,
   GetScheduleParams,
   GetScheduleResult,
-} from "./schemas";
+} from "./schemas/index.js";
 
 export interface LarkProjectMCPClientOptions {
   /** MCP Server 的 mcpKey */

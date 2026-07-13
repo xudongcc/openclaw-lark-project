@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { UserDetailSchema } from "./user";
-import type { UserDetail } from "./user";
+import { UserDetailSchema } from "./user.js";
+import type { UserDetail } from "./user.js";
 
 // ── 团队查询参数 ──────────────────────────────────────
 

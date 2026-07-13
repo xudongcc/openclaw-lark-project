@@ -4,10 +4,10 @@ import {
   PaginationSchema,
   createLarkProjectResponseSchema,
   msToDate,
-} from "./common";
-import type { Pagination } from "./common";
-import { WorkItemSchema } from "./work-item";
-import type { WorkItem } from "./work-item";
+} from "./common.js";
+import type { Pagination } from "./common.js";
+import { WorkItemSchema } from "./work-item.js";
+import type { WorkItem } from "./work-item.js";
 
 // ── 视图查询参数 ────────────────────────────────────────
 

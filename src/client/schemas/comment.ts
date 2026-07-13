@@ -3,7 +3,7 @@ import {
   createLarkProjectResponseSchema,
   WorkItemLocatorSchema,
   msToDate,
-} from "./common";
+} from "./common.js";
 
 // ── 评论实体类型 ─────────────────────────────────────────
 

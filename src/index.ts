@@ -1,8 +1,8 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { z } from "zod/v4";
-import { LarkProjectClient } from "./client/client";
-import { LarkProjectMCPClient } from "./client/mcp-client";
-import { toJSONSchema } from "./client/utils/to-json-schema";
+import { LarkProjectClient } from "./client/client.js";
+import { LarkProjectMCPClient } from "./client/mcp-client.js";
+import { toJSONSchema } from "./client/utils/to-json-schema.js";
 
 import {
   CreateWorkItemParamsSchema,
@@ -16,27 +16,27 @@ import {
   RollbackNodeParamsSchema,
   ChangeStateParamsSchema,
   GetBusinessesParamsSchema,
-} from "./client/schemas/work-item";
+} from "./client/schemas/work-item.js";
 
 import {
   CreateCommentParamsSchema,
   GetCommentsParamsSchema,
   UpdateCommentParamsSchema,
   DeleteCommentParamsSchema,
-} from "./client/schemas/comment";
+} from "./client/schemas/comment.js";
 
-import { GetViewDetailParamsSchema } from "./client/schemas/view";
+import { GetViewDetailParamsSchema } from "./client/schemas/view.js";
 
 import {
   GetUserParamsSchema,
   GetUsersByUserKeysParamsSchema,
-} from "./client/schemas/user";
+} from "./client/schemas/user.js";
 
-import { GetTeamsParamsSchema } from "./client/schemas/team";
+import { GetTeamsParamsSchema } from "./client/schemas/team.js";
 import {
   GetScheduleParamsSchema,
   SearchByMqlParamsSchema,
-} from "./client/schemas/mcp";
+} from "./client/schemas/mcp.js";
 
 // ── 插件配置 ──
 

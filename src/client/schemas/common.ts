@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { dateFormat } from "../utils/date-format";
+import { dateFormat } from "../utils/date-format.js";
 
 /**
  * Options for initializing a `LarkProjectClient` client.

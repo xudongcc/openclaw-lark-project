@@ -1,3 +1,3 @@
-export * from "./schemas";
-export * from "./client";
-export * from "./mcp-client";
+export * from "./schemas/index.js";
+export * from "./client.js";
+export * from "./mcp-client.js";

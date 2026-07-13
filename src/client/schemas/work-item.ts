@@ -4,9 +4,9 @@ import {
   createLarkProjectResponseSchema,
   WorkItemLocatorSchema,
   msToDate,
-} from "./common";
-import type { WorkItemLocator } from "./common";
-import { dateFormat } from "../utils/date-format";
+} from "./common.js";
+import type { WorkItemLocator } from "./common.js";
+import { dateFormat } from "../utils/date-format.js";
 
 // ── 工作项实体类型 ──────────────────────────────────────
 

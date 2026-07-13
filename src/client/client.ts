@@ -1,4 +1,4 @@
-import { UserCache } from "./user-cache";
+import { UserCache } from "./user-cache.js";
 import JSONBigInt from "json-bigint";
 import type {
   LarkProjectClientOptions,
@@ -46,7 +46,7 @@ import type {
   GetWorkItemSchemaResult,
   GetTeamsResult,
   LarkProjectResponse,
-} from "./schemas";
+} from "./schemas/index.js";
 import {
   LarkProjectClientOptionsSchema,
   CreateCommentParamsSchema,
@@ -86,7 +86,7 @@ import {
   GetUsersByUserKeysParamsSchema,
   GetUserParamsSchema,
   SearchUsersParamsSchema,
-} from "./schemas";
+} from "./schemas/index.js";
 import url from "node:url";
 import { default as _ } from "lodash";
 
