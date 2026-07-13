@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.13.0...v1.13.1) (2026-07-13)
+
+
+### Bug Fixes
+
+* 升级 OpenClaw 并声明工具契约 ([e11f49a](https://github.com/xudongcc/openclaw-lark-project/commit/e11f49a4c394b051a1b3b110d1df0033dae56c1c))
+
 # [1.13.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.12.1...v1.13.0) (2026-03-18)
 
 
