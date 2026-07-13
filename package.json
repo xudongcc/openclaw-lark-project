@@ -7,12 +7,16 @@
   "files": [
     "skills",
     "src",
+    "dist",
     "!src/**/*.test.ts",
     "openclaw.plugin.json"
   ],
   "openclaw": {
     "extensions": [
       "./src/index.ts"
+    ],
+    "runtimeExtensions": [
+      "./dist/index.js"
     ]
   },
   "repository": {

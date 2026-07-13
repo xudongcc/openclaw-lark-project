@@ -1,7 +1,7 @@
 {
   "id": "openclaw-lark-project",
   "name": "Lark Project",
-  "entry": "./src/index.ts",
+  "entry": "./dist/index.js",
   "skills": ["./skills"],
   "contracts": {
     "tools": [
