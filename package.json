@@ -1,0 +1,46 @@
+{
+  "name": "lark-project",
+  "version": "1.0.0",
+  "description": "通过飞书项目官方 MCP 服务查询和管理工作项、项目、排期与协作数据。",
+  "license": "MIT",
+  "author": "xudongcc",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xudongcc/openclaw-lark-project.git"
+  },
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./src/index.js"
+    ]
+  },
+  "files": [
+    "openclaw.plugin.json",
+    "skills",
+    "src",
+    "assets/icon.png",
+    "README.md",
+    "LICENSE",
+    "LICENSES"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=24.22.1 <25 || >=26.12.1"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.10.8"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "mime": "4.1.2"
+  },
+  "devDependencies": {
+    "openclaw": "2026.10.8"
+  }
+}

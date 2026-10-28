@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24.22.1"
+          package-manager-cache: false
+      - run: node --check src/index.js && node --check release.config.js
+      - run: npm install --ignore-scripts --omit=peer --no-package-lock --no-audit --no-fund
+      - run: npm test
+      - run: npm pack --dry-run --ignore-scripts
+      - run: npx --yes semantic-release@25.0.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

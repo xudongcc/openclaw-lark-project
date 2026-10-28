@@ -1,0 +1,31 @@
+{
+  "id": "lark-project",
+  "name": "飞书项目",
+  "version": "1.0.0",
+  "description": "通过飞书项目官方 MCP 服务查询和管理工作项、项目、排期与协作数据。",
+  "icon": "https://sf3-cn.feishucdn.com/obj/meego-static/front/static/20251121-114942.png",
+  "skills": [
+    "./skills"
+  ],
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "mcpServers": {
+    "lark-project": {
+      "transport": "streamable-http",
+      "url": "https://project.feishu.cn/mcp_server/v1",
+      "auth": "oauth"
+    }
+  },
+  "contracts": {
+    "tools": [
+      "lark-project__url_decode",
+      "lark-project__attachment_upload",
+      "lark-project__attachment_download",
+      "lark-project__workitem_batch_get",
+      "lark-project__query_all"
+    ]
+  }
+}

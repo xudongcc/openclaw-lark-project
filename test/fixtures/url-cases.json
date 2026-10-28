@@ -1,0 +1,522 @@
+[
+  {
+    "name": "root",
+    "url": "https://meegle.com/",
+    "want": "root"
+  },
+  {
+    "name": "workbench",
+    "url": "https://meegle.com/workbench",
+    "want": "workbench"
+  },
+  {
+    "name": "workspaces",
+    "url": "https://meegle.com/workspaces",
+    "want": "workspaces"
+  },
+  {
+    "name": "favorites",
+    "url": "https://meegle.com/favorites",
+    "want": "favorites"
+  },
+  {
+    "name": "inbox",
+    "url": "https://meegle.com/inbox",
+    "want": "inbox"
+  },
+  {
+    "name": "teams",
+    "url": "https://meegle.com/teams",
+    "want": "teams"
+  },
+  {
+    "name": "teams_detail",
+    "url": "https://meegle.com/teams/detail/team_abc",
+    "want": "team_detail"
+  },
+  {
+    "name": "teams_empty",
+    "url": "https://meegle.com/teams/empty",
+    "want": "teams"
+  },
+  {
+    "name": "list",
+    "url": "https://meegle.com/list",
+    "want": "project_list"
+  },
+  {
+    "name": "templates",
+    "url": "https://meegle.com/templates",
+    "want": "templates"
+  },
+  {
+    "name": "template_detail",
+    "url": "https://meegle.com/templates/detail/tpl_42",
+    "want": "template_detail"
+  },
+  {
+    "name": "template_manage",
+    "url": "https://meegle.com/templates/manage",
+    "want": "template_manage"
+  },
+  {
+    "name": "tenant",
+    "url": "https://meegle.com/tenant",
+    "want": "tenant_select"
+  },
+  {
+    "name": "tenant_create",
+    "url": "https://meegle.com/tenant/create",
+    "want": "tenant_create"
+  },
+  {
+    "name": "home_ka",
+    "url": "https://meegle.com/home",
+    "want": "home_ka"
+  },
+  {
+    "name": "helpcenter",
+    "url": "https://meegle.com/helpcenter",
+    "want": "helpcenter"
+  },
+  {
+    "name": "openapp",
+    "url": "https://meegle.com/openapp",
+    "want": "openapp"
+  },
+  {
+    "name": "quick_create_form",
+    "url": "https://meegle.com/new-form",
+    "want": "quick_create_form"
+  },
+  {
+    "name": "issue_trans",
+    "url": "https://meegle.com/issue-trans",
+    "want": "issue_trans"
+  },
+  {
+    "name": "jump_to_outer",
+    "url": "https://meegle.com/jump-to-outer",
+    "want": "jump_to_outer"
+  },
+  {
+    "name": "light_share",
+    "url": "https://meegle.com/light-share",
+    "want": "light_share"
+  },
+  {
+    "name": "channel_error",
+    "url": "https://meegle.com/channel-error",
+    "want": "channel_error"
+  },
+  {
+    "name": "enterprise_manage",
+    "url": "https://meegle.com/enterprise_manage",
+    "want": "enterprise_manage"
+  },
+  {
+    "name": "login_fetch_cookie",
+    "url": "https://meegle.com/fetch-cookie-by-login",
+    "want": "login_fetch_cookie"
+  },
+  {
+    "name": "login_asset",
+    "url": "https://meegle.com/login-asset",
+    "want": "login_asset"
+  },
+  {
+    "name": "switch_asset",
+    "url": "https://meegle.com/switch-asset",
+    "want": "switch_asset"
+  },
+  {
+    "name": "issue_create_open_usecase",
+    "url": "https://meegle.com/issue-create-open/use-case",
+    "want": "issue_create_open_usecase"
+  },
+  {
+    "name": "story_create_open",
+    "url": "https://meegle.com/story-create-open/bn_42",
+    "want": "story_create_open"
+  },
+  {
+    "name": "ai_application_share",
+    "url": "https://meegle.com/aiApplication/ai_application_share",
+    "want": "ai_application_share"
+  },
+  {
+    "name": "lark_page_404",
+    "url": "https://meegle.com/error-page/lark-page-404",
+    "want": "lark_page_404"
+  },
+  {
+    "name": "project_empty_page",
+    "url": "https://meegle.com/error-page/project-empty",
+    "want": "project_empty_page"
+  },
+  {
+    "name": "route_loading",
+    "url": "https://meegle.com/error-page/loading",
+    "want": "route_loading"
+  },
+  {
+    "name": "system_upgrade",
+    "url": "https://meegle.com/error-page/system-upgrade",
+    "want": "system_upgrade"
+  },
+  {
+    "name": "b_home",
+    "url": "https://meegle.com/b",
+    "want": "b_home"
+  },
+  {
+    "name": "no_project_auth",
+    "url": "https://meegle.com/b/noAuth",
+    "want": "no_project_auth"
+  },
+  {
+    "name": "preference",
+    "url": "https://meegle.com/b/preference",
+    "want": "preference"
+  },
+  {
+    "name": "mcp_config",
+    "url": "https://meegle.com/b/mcp",
+    "want": "mcp_config"
+  },
+  {
+    "name": "mcp_config_legacy",
+    "url": "https://meegle.com/b/mcp-config",
+    "want": "mcp_config"
+  },
+  {
+    "name": "ai_hub",
+    "url": "https://meegle.com/b/ai",
+    "want": "ai_hub"
+  },
+  {
+    "name": "handover",
+    "url": "https://meegle.com/b/handover",
+    "want": "handover"
+  },
+  {
+    "name": "login_datacenter",
+    "url": "https://meegle.com/b/login",
+    "want": "login_datacenter"
+  },
+  {
+    "name": "trial_price",
+    "url": "https://meegle.com/b/price",
+    "want": "trial_price"
+  },
+  {
+    "name": "trial_enable",
+    "url": "https://meegle.com/b/trial/enable",
+    "want": "trial_enable"
+  },
+  {
+    "name": "trial_new",
+    "url": "https://meegle.com/b/trial/new",
+    "want": "trial_new"
+  },
+  {
+    "name": "onboarding_task",
+    "url": "https://meegle.com/b/onboarding/task",
+    "want": "onboarding_task"
+  },
+  {
+    "name": "onboarding_operation_task",
+    "url": "https://meegle.com/b/onboarding/operation-task",
+    "want": "onboarding_operation_task"
+  },
+  {
+    "name": "onboarding_create_shared",
+    "url": "https://meegle.com/b/onboarding/create-project-by-shared",
+    "want": "onboarding_create_shared"
+  },
+  {
+    "name": "slack_connect",
+    "url": "https://meegle.com/b/integration/slack/connect",
+    "want": "slack_connect"
+  },
+  {
+    "name": "cross_fail",
+    "url": "https://meegle.com/b/cross/fail",
+    "want": "cross_fail"
+  },
+  {
+    "name": "cross_invite",
+    "url": "https://meegle.com/b/cross/invite",
+    "want": "cross_invite"
+  },
+  {
+    "name": "mcp_auth",
+    "url": "https://meegle.com/b/auth/mcp",
+    "want": "mcp_auth"
+  },
+  {
+    "name": "mcp_auth_page",
+    "url": "https://meegle.com/b/auth/mcp-page",
+    "want": "mcp_auth"
+  },
+  {
+    "name": "resource_handover",
+    "url": "https://meegle.com/b/resource/u123",
+    "want": "resource_handover"
+  },
+  {
+    "name": "unbundled_register_result",
+    "url": "https://meegle.com/b/register-meego-unbundled/result",
+    "want": "unbundled_register_result"
+  },
+  {
+    "name": "setting_home",
+    "url": "https://meegle.com/xopenapp/setting",
+    "want": "setting_home"
+  },
+  {
+    "name": "setting_workobject",
+    "url": "https://meegle.com/xopenapp/setting/workObject/story",
+    "want": "setting_workobject"
+  },
+  {
+    "name": "setting_workobject_advanced",
+    "url": "https://meegle.com/xopenapp/setting/workObjectSetting/advancedConfig",
+    "want": "setting_workobject_advanced"
+  },
+  {
+    "name": "setting_user_group_legacy",
+    "url": "https://meegle.com/xopenapp/setting/userGroup/roleA",
+    "want": "setting_user_group_legacy"
+  },
+  {
+    "name": "setting_user_group",
+    "url": "https://meegle.com/xopenapp/setting/userGroupList",
+    "want": "setting_user_group"
+  },
+  {
+    "name": "setting_permission",
+    "url": "https://meegle.com/xopenapp/setting/permission/story",
+    "want": "setting_permission"
+  },
+  {
+    "name": "setting_permission_preview",
+    "url": "https://meegle.com/xopenapp/setting/permission_preview",
+    "want": "setting_permission_preview"
+  },
+  {
+    "name": "setting_apply_cross_sync",
+    "url": "https://meegle.com/xopenapp/setting/applyCrossProjectSync",
+    "want": "setting_apply_cross_sync"
+  },
+  {
+    "name": "import_jira",
+    "url": "https://meegle.com/xopenapp/jira-import",
+    "want": "import_jira"
+  },
+  {
+    "name": "import_excel",
+    "url": "https://meegle.com/xopenapp/import-ins-data",
+    "want": "import_excel"
+  },
+  {
+    "name": "data_recycle",
+    "url": "https://meegle.com/xopenapp/data-recycle-page",
+    "want": "data_recycle"
+  },
+  {
+    "name": "gantt_homepage",
+    "url": "https://meegle.com/xopenapp/user-gantt/homepage",
+    "want": "gantt_homepage"
+  },
+  {
+    "name": "multi_project_homepage",
+    "url": "https://meegle.com/xopenapp/multi-project-view/homepage",
+    "want": "multi_project_homepage"
+  },
+  {
+    "name": "chart_homepage",
+    "url": "https://meegle.com/xopenapp/chart/homepage",
+    "want": "chart_homepage"
+  },
+  {
+    "name": "subtask_homepage",
+    "url": "https://meegle.com/xopenapp/sub_task/homepage",
+    "want": "subtask_homepage"
+  },
+  {
+    "name": "project_overview_homepage",
+    "url": "https://meegle.com/xopenapp/project-overview/homepage",
+    "want": "project_overview_homepage"
+  },
+  {
+    "name": "chart_detail",
+    "url": "https://meegle.com/xopenapp/chart/detail/c42",
+    "want": "chart_detail"
+  },
+  {
+    "name": "chart_create",
+    "url": "https://meegle.com/xopenapp/chart/create",
+    "want": "chart_create"
+  },
+  {
+    "name": "chart_datascope",
+    "url": "https://meegle.com/xopenapp/chartdatascope/detail/c42",
+    "want": "chart_datascope"
+  },
+  {
+    "name": "chart_datascope_v2",
+    "url": "https://meegle.com/xopenapp/chartdatascopeV2/detail/c42",
+    "want": "chart_datascope_v2"
+  },
+  {
+    "name": "chart_penetrate_default",
+    "url": "https://meegle.com/xopenapp/chartpenetrate/default/detail/c42",
+    "want": "chart_penetrate"
+  },
+  {
+    "name": "chart_penetrate_short",
+    "url": "https://meegle.com/xopenapp/chartpenetrate/detail/c42",
+    "want": "chart_penetrate"
+  },
+  {
+    "name": "chart_penetrate_small",
+    "url": "https://meegle.com/xopenapp/chartpenetrate/small/detail/c42",
+    "want": "chart_penetrate_small"
+  },
+  {
+    "name": "chart_penetrate_v2",
+    "url": "https://meegle.com/xopenapp/chartpenetrateV2/default/detail/c42",
+    "want": "chart_penetrate_v2"
+  },
+  {
+    "name": "chart_penetrate_v2_small",
+    "url": "https://meegle.com/xopenapp/chartpenetrateV2/small/detail/c42",
+    "want": "chart_penetrate_v2_small"
+  },
+  {
+    "name": "view_story",
+    "url": "https://meegle.com/xopenapp/storyView/v1",
+    "want": "view_story"
+  },
+  {
+    "name": "view_issue",
+    "url": "https://meegle.com/xopenapp/issueView/v1",
+    "want": "view_issue"
+  },
+  {
+    "name": "view_multi_project",
+    "url": "https://meegle.com/xopenapp/multiProjectView/v1",
+    "want": "view_multi_project"
+  },
+  {
+    "name": "view_project_overview",
+    "url": "https://meegle.com/xopenapp/project-overview/v1",
+    "want": "view_project_overview"
+  },
+  {
+    "name": "view_user_gantt",
+    "url": "https://meegle.com/xopenapp/userGantt/v1",
+    "want": "view_user_gantt"
+  },
+  {
+    "name": "view_chart",
+    "url": "https://meegle.com/xopenapp/workObjectView/chart/v1",
+    "want": "view_chart"
+  },
+  {
+    "name": "view_workitem",
+    "url": "https://meegle.com/xopenapp/workObjectView/story/v1",
+    "want": "view_workitem"
+  },
+  {
+    "name": "plugin_page",
+    "url": "https://meegle.com/xopenapp/meegoPlg/my_plg",
+    "want": "plugin_page"
+  },
+  {
+    "name": "project_ai_assist",
+    "url": "https://meegle.com/xopenapp/ai-assist",
+    "want": "project_ai_assist"
+  },
+  {
+    "name": "project_home",
+    "url": "https://meegle.com/xopenapp",
+    "want": "project_home"
+  },
+  {
+    "name": "project_empty",
+    "url": "https://meegle.com/xopenapp/empty",
+    "want": "project_empty"
+  },
+  {
+    "name": "project_overview",
+    "url": "https://meegle.com/xopenapp/overview",
+    "want": "project_overview"
+  },
+  {
+    "name": "project_overview_edit",
+    "url": "https://meegle.com/xopenapp/overview/edit",
+    "want": "project_overview_edit"
+  },
+  {
+    "name": "project_404",
+    "url": "https://meegle.com/xopenapp/404",
+    "want": "project_404"
+  },
+  {
+    "name": "project_401",
+    "url": "https://meegle.com/xopenapp/401",
+    "want": "project_401"
+  },
+  {
+    "name": "project_500",
+    "url": "https://meegle.com/xopenapp/500",
+    "want": "project_500"
+  },
+  {
+    "name": "workitem_detail",
+    "url": "https://meegle.com/xopenapp/story/detail/7092625364",
+    "want": "workitem_detail"
+  },
+  {
+    "name": "workitem_create",
+    "url": "https://meegle.com/xopenapp/story/create",
+    "want": "workitem_create"
+  },
+  {
+    "name": "workitem_draft",
+    "url": "https://meegle.com/xopenapp/story/draft",
+    "want": "workitem_draft"
+  },
+  {
+    "name": "workitem_homepage",
+    "url": "https://meegle.com/xopenapp/story/homepage",
+    "want": "workitem_homepage"
+  },
+  {
+    "name": "workitem_homepage_edit",
+    "url": "https://meegle.com/xopenapp/story/homepage/edit",
+    "want": "workitem_homepage_edit"
+  },
+  {
+    "name": "setting_other_workobjectsetting",
+    "url": "https://meegle.com/xopenapp/setting/workObjectSetting",
+    "want": "setting_other"
+  },
+  {
+    "name": "setting_other_future_subpage",
+    "url": "https://meegle.com/xopenapp/setting/futureFeature",
+    "want": "setting_other"
+  },
+  {
+    "name": "setting_other_nested",
+    "url": "https://meegle.com/xopenapp/setting/workObjectSetting/nestedPage",
+    "want": "setting_other"
+  },
+  {
+    "name": "unknown_bogus",
+    "url": "https://meegle.com/this-is/not/a/meego/path/that/matches",
+    "want": "unknown"
+  }
+]

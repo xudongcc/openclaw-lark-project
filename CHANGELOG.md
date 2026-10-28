@@ -1,0 +1,196 @@
+## [1.13.2](https://github.com/xudongcc/openclaw-lark-project/compare/v1.13.1...v1.13.2) (2026-07-13)
+
+
+### Bug Fixes
+
+* declare compiled OpenClaw runtime entry ([fbf9460](https://github.com/xudongcc/openclaw-lark-project/commit/fbf94608434f18d3059ac44db17a9bfd66e3d0ae))
+* publish compiled ESM runtime ([451460d](https://github.com/xudongcc/openclaw-lark-project/commit/451460d26b63e28dfa910e70c9a1326e0199c3d9))
+
+## [1.13.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.13.0...v1.13.1) (2026-07-13)
+
+
+### Bug Fixes
+
+* 升级 OpenClaw 并声明工具契约 ([e11f49a](https://github.com/xudongcc/openclaw-lark-project/commit/e11f49a4c394b051a1b3b110d1df0033dae56c1c))
+
+# [1.13.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.12.1...v1.13.0) (2026-03-18)
+
+
+### Features
+
+* 注册 search_by_mql 工具并优化拆分技能文档 ([79502a3](https://github.com/xudongcc/openclaw-lark-project/commit/79502a34fecc1f03e083b49b51578c0c7e5cf0ff))
+
+## [1.12.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.12.0...v1.12.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* 统一用户标识为 user_key ([fb496b3](https://github.com/xudongcc/openclaw-lark-project/commit/fb496b33ca29b680ddcf095689eeef75e15ccaeb))
+
+# [1.12.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.11.3...v1.12.0) (2026-03-18)
+
+
+### Features
+
+* 将日期输出统一为带有本地时区偏移的 ISO 8601 格式 ([b8267eb](https://github.com/xudongcc/openclaw-lark-project/commit/b8267eb8b793e09c9d8e8a0e526e4e10d0328871))
+
+## [1.11.3](https://github.com/xudongcc/openclaw-lark-project/compare/v1.11.2...v1.11.3) (2026-03-11)
+
+
+### Bug Fixes
+
+* use draft-07 JSON Schema to avoid ajv compatibility error ([c6335c2](https://github.com/xudongcc/openclaw-lark-project/commit/c6335c29b5dc883da7d90500391d085e547f5840))
+
+## [1.11.2](https://github.com/xudongcc/openclaw-lark-project/compare/v1.11.1...v1.11.2) (2026-03-11)
+
+
+### Bug Fixes
+
+* 修复没有打包 skills ([43837b0](https://github.com/xudongcc/openclaw-lark-project/commit/43837b04d7362a7fe48ce43941e0239a6b6f92b6))
+
+## [1.11.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.11.0...v1.11.1) (2026-03-11)
+
+
+### Bug Fixes
+
+* update stale tool name references in schema descriptions ([49d4925](https://github.com/xudongcc/openclaw-lark-project/commit/49d492566f6c696d9616fbe69019111ae2c4cb1f))
+
+# [1.11.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.10.1...v1.11.0) (2026-03-11)
+
+
+### Features
+
+* 拆分工具以解决 LLM 对 JSONSchema 兼容问题。 ([36963bc](https://github.com/xudongcc/openclaw-lark-project/commit/36963bc8ef4063064022e7e652761198abe132cb))
+
+## [1.10.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.10.0...v1.10.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* add .optional() before .default() to fix JSON Schema additionalProperties rejection ([4c6d568](https://github.com/xudongcc/openclaw-lark-project/commit/4c6d568ce1816675d6df102f4cfe0ffe7ee0ea0d))
+
+# [1.10.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.9.1...v1.10.0) (2026-03-10)
+
+
+### Features
+
+* 严格限制工具输入输出格式，统一所有工具输出时间格式。 ([e55b758](https://github.com/xudongcc/openclaw-lark-project/commit/e55b758e6929c41002f32204ac7c801b0a4f4e30))
+* 优化用户工具 ([6457fa5](https://github.com/xudongcc/openclaw-lark-project/commit/6457fa538b05c1f25ea5da732447414ca59bb49e))
+
+## [1.9.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.9.0...v1.9.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* 更新 SKILL.md 工具返回字段文档 ([f5338d7](https://github.com/xudongcc/openclaw-lark-project/commit/f5338d7ccdf3a91c7a9d8808c9968d57a64b3105))
+
+# [1.9.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.8.2...v1.9.0) (2026-03-10)
+
+
+### Features
+
+* 优化工具输出减少 LLM token 消耗和幻觉 ([861c6ed](https://github.com/xudongcc/openclaw-lark-project/commit/861c6ed0c6f3ec3c22b35532cfa46097af616c52))
+
+## [1.8.2](https://github.com/xudongcc/openclaw-lark-project/compare/v1.8.1...v1.8.2) (2026-03-10)
+
+
+### Bug Fixes
+
+* 修复插件安装失败 ([7dfbbd1](https://github.com/xudongcc/openclaw-lark-project/commit/7dfbbd1660cccf843486f441c95c7c969763483a))
+
+## [1.8.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.8.0...v1.8.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* 从插件配置属性中移除 `minLength: 1` 验证，以免导致安装插件失败。 ([f35de64](https://github.com/xudongcc/openclaw-lark-project/commit/f35de642fcd5427153350b1377f652dda24abf40))
+
+# [1.8.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.7.1...v1.8.0) (2026-03-10)
+
+
+### Features
+
+* 新增用户查询和团队人员工具 ([3b24403](https://github.com/xudongcc/openclaw-lark-project/commit/3b2440397a12f5fd50f9d58f98bf769dfbd98cab))
+
+## [1.7.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.7.0...v1.7.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* **comment:** convert created_at timestamp to Date to reduce AI hallucination ([34e71b7](https://github.com/xudongcc/openclaw-lark-project/commit/34e71b79f19fc0deb39888caf33e9290023077ee))
+
+# [1.7.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.6.1...v1.7.0) (2026-03-09)
+
+
+### Features
+
+* 集成 MCP Client SDK 并重构其核心 Client 模块 ([a0cafc4](https://github.com/xudongcc/openclaw-lark-project/commit/a0cafc4155dcb532a1070ab0f1f1ffe04e8e1b68))
+
+## [1.6.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.6.0...v1.6.1) (2026-03-09)
+
+
+### Bug Fixes
+
+* 使用 json-bigint 修复大整数 ID 精度丢失问题 ([14dade1](https://github.com/xudongcc/openclaw-lark-project/commit/14dade14854ae9da34a8d573c31af8309024350f))
+
+# [1.6.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.5.0...v1.6.0) (2026-03-06)
+
+
+### Features
+
+* relocate SDK and its tests to a dedicated `src/sdk` directory and introduce type definitions. ([386e9a7](https://github.com/xudongcc/openclaw-lark-project/commit/386e9a7441e0e1448315c08d9b87fc49aee0403a))
+
+# [1.5.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.4.0...v1.5.0) (2026-03-06)
+
+
+### Features
+
+* Add business listing and enhance `updateWorkItemField` to support description and business fields, replacing `updateWorkItemDescription`. ([1d05f17](https://github.com/xudongcc/openclaw-lark-project/commit/1d05f170f38b3d0304f1c8538e590c744f859eea))
+
+# [1.4.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.3.0...v1.4.0) (2026-03-06)
+
+
+### Features
+
+* Add `updateWorkItemRoleOwners` functionality with a test for empty role owners and update gitignore. ([ff639d8](https://github.com/xudongcc/openclaw-lark-project/commit/ff639d8ad3370e2c7f9aeeaabefd2a71119f6264))
+
+# [1.3.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.2.1...v1.3.0) (2026-03-06)
+
+
+### Features
+
+* restructure plugin as object-style export with unified tool ([a62e087](https://github.com/xudongcc/openclaw-lark-project/commit/a62e08729af9ee51d6310d099d19655ce09e2aec))
+
+## [1.2.1](https://github.com/xudongcc/openclaw-lark-project/compare/v1.2.0...v1.2.1) (2026-03-06)
+
+
+### Bug Fixes
+
+* resolve plugin config from full openclaw config object ([5b2f840](https://github.com/xudongcc/openclaw-lark-project/commit/5b2f840c78cfc82749192297fbdee1124d8c693d))
+
+# [1.2.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.1.0...v1.2.0) (2026-03-06)
+
+
+### Features
+
+* Update Lark Project skill documentation. ([a2d3af0](https://github.com/xudongcc/openclaw-lark-project/commit/a2d3af009264014cf011631f39d6f99647d4666f))
+
+# [1.1.0](https://github.com/xudongcc/openclaw-lark-project/compare/v1.0.0...v1.1.0) (2026-03-06)
+
+
+### Features
+
+* add work item comment tools (create, list, delete) ([627a963](https://github.com/xudongcc/openclaw-lark-project/commit/627a963fdf6b177293385b7e062fd93315a84bc3))
+
+# 1.0.0 (2026-03-05)
+
+
+### Features
+
+* add fetch-based token manager and token storage guidance ([ad0894f](https://github.com/xudongcc/openclaw-lark-project/commit/ad0894f055211cdedf01ad5c206246ea90480655))
+* add MCP-style search_by_mql tool schema and fetch execution ([943a4ee](https://github.com/xudongcc/openclaw-lark-project/commit/943a4ee9da3021511dac572d1ef32e7454e131a6))
+* derive OpenAPI endpoints from Postman template for core workitem tools ([8802ae5](https://github.com/xudongcc/openclaw-lark-project/commit/8802ae541e3ae586c19e8cace2425e1187e5a282))
+* implement OpenAPI tool scaffolds aligned with Feishu MCP schemas ([1cec50b](https://github.com/xudongcc/openclaw-lark-project/commit/1cec50b46ee26a31fc4a4cb966d9bb48fd21258a))
+* Replaced OpenAPI client with a new SDK, updated plugin configuration, and added release and testing workflows. ([88a7f17](https://github.com/xudongcc/openclaw-lark-project/commit/88a7f17e68bac58cfc51ba92abb30e6855bb5ad1))
+* scaffold lark project plugin with control ui schema and labels ([b2544fb](https://github.com/xudongcc/openclaw-lark-project/commit/b2544fb4a13ddbf21e8371eef0dd96a24a88b73c))
+* Update plugin ID and disable test step in release workflow. ([194231f](https://github.com/xudongcc/openclaw-lark-project/commit/194231fa828e58468d333e7ed75c1d4df8c33bbb))
