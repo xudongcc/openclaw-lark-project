@@ -6,7 +6,7 @@
 
 ## 安装
 
-需要 OpenClaw 2026.10.8 或更新版本，以及 Node.js `>=24.22.1 <25 || >=26.12.1`，支持插件清单 `mcpServers`、MCP OAuth 和公开 `security-runtime` SDK，以及具有相应项目权限的飞书项目账号。
+需要 OpenClaw 2026.10.8 或更新版本、Node.js `>=24.22.1 <25 || >=26.12.1`，以及具有相应项目权限的飞书项目账号。
 
 ```sh
 openclaw plugins install lark-project
@@ -15,6 +15,8 @@ openclaw plugins install lark-project
 按提示确认安装 npm 来源的插件。
 
 安装后，在 OpenClaw 插件页面打开 **飞书项目**，点击“连接”完成 OAuth 授权，再开启新会话。无需手动配置插件密钥、安装依赖或构建。
+
+如果“连接”失败，可以告诉 Agent：“帮我连接飞书项目”。Agent 在 Gateway 机器上通过 OpenClaw CLI 发起登录，你完成账号登录和授权确认。远程浏览器也可完成授权后，将完整的本机回调 URL 通过私有会话交给 Agent 继续；该 URL 包含一次性授权码，不要公开分享。详见[授权指引](./skills/lark-project/references/auth-guard.md#agent-协助-oauth-授权)。
 
 ## 使用
 
@@ -26,9 +28,9 @@ openclaw plugins install lark-project
 
 业务工具和项目操作权限由官方 MCP 服务及账号授权决定。写入操作会修改飞书项目中的内容。
 
-插件附带 `lark-project` 技能，提供 MQL、字段格式、工作流和分页等使用指引，并按场景加载参考文档。技能基于[官方 Meegle 技能](https://github.com/larksuite/meegle-cli/tree/main/skills/meegle)改写，直接使用 MCP，无需安装 CLI。来源和许可证见 [UPSTREAM.md](./skills/lark-project/UPSTREAM.md)。
+插件附带 `lark-project` 技能，提供 MQL、字段格式、工作流和分页等使用指引，并按场景加载参考文档。来源和许可证见 [UPSTREAM.md](./skills/lark-project/UPSTREAM.md)。
 
-插件还提供五个原生工具，参考官方 Meegle CLI 的 Go 实现：
+插件还提供五个原生工具：
 
 | 工具 | 功能 |
 |---|---|
@@ -50,4 +52,4 @@ MCP 服务地址：`https://project.feishu.cn/mcp_server/v1`。
 
 ## 许可证
 
-MIT。上游 CLI 实现及测试样例的许可证见 [LICENSES/meegle-cli.txt](./LICENSES/meegle-cli.txt)。MIME 类型查询使用 MIT 许可的 [mime](https://github.com/broofa/mime) 包。
+MIT。上游代码及测试样例的许可证见[许可证文件](./LICENSES/meegle-cli.txt)。MIME 类型查询使用 MIT 许可的 [mime](https://github.com/broofa/mime) 包。

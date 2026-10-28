@@ -1,17 +1,17 @@
 ---
 name: lark-project
 description: |
-  通过 OpenClaw 的飞书项目 MCP 查询和管理 Meego/Meegle 工作项、需求、缺陷、任务、字段、角色、评论、节点与状态流转、视图、待办、排期和 WBS。用户提到飞书项目、project.feishu.cn 链接、MQL、团队排期或项目工作流时使用。本技能面向飞书项目，不用于普通飞书云文档、聊天或日历。
+  通过 OpenClaw 的飞书项目 MCP 查询和管理 Meego/Meegle 工作项、需求、缺陷、任务、字段、角色、评论、节点与状态流转、视图、待办、排期和 WBS，并协助完成连接授权。用户提到飞书项目、project.feishu.cn 链接、MQL、团队排期、项目工作流或飞书项目 OAuth 登录时使用。本技能面向飞书项目，不用于普通飞书云文档、聊天或日历。
 license: MIT
 ---
 
 # 飞书项目操作指南
 
-通过 OpenClaw 插件 `lark-project` 连接的官方 MCP 服务操作飞书项目数据。直接调用官方 MCP 业务工具，以及插件提供的 URL 解析、附件传输、批量读取和全量分页工具，无需安装外部 CLI。输出语言跟随用户，默认中文。
+通过 OpenClaw 插件 `lark-project` 连接的官方 MCP 服务操作飞书项目数据。直接调用官方 MCP 业务工具，以及插件提供的 URL 解析、附件传输、批量读取和全量分页工具。用户要求协助连接或 Web UI 授权失败时，按认证参考文档使用 OpenClaw 自带 CLI 完成授权。输出语言跟随用户，默认中文。
 
 保留官方技能按业务域与 SOP 分层的结构，按需读取参考文件：
 
-- **连接与身份**：[references/auth-guard.md](references/auth-guard.md)
+- **连接、Agent 协助 OAuth 与身份**：[references/auth-guard.md](references/auth-guard.md)；首次连接、授权失效或 Web UI 登录失败时读取。
 - **工具发现与 JSON 参数**：[references/mcp-guide.md](references/mcp-guide.md)
 - **调用示例**：[references/api-examples.md](references/api-examples.md)
 - **来源与许可证**：[UPSTREAM.md](UPSTREAM.md)
