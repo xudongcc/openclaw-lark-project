@@ -14,7 +14,9 @@ openclaw plugins install lark-project
 
 按提示确认安装 npm 来源的插件。
 
-安装后，在 OpenClaw 插件页面打开 **飞书项目**，点击“连接”完成 OAuth 授权，再开启新会话。无需手动配置插件密钥、安装依赖或构建。
+安装后，在 OpenClaw 插件页面打开 **飞书项目**，点击“连接”完成 OAuth 授权，再开启新会话。无需安装飞书官方 CLI、手动配置插件密钥或构建。
+
+如果“连接”失败，可以告诉 Agent：“帮我连接飞书项目”。Agent 在 Gateway 机器上通过 OpenClaw CLI 发起登录，你完成账号登录和授权确认。远程浏览器也可完成授权后，将完整的本机回调 URL 通过私有会话交给 Agent 继续；该 URL 包含一次性授权码，不要公开分享。详见[授权指引](./skills/lark-project/references/auth-guard.md#agent-协助-oauth-授权)。
 
 ## 使用
 
